@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "terrapyn"
-version = "0.0.0"
+version = "0.0.1"
 homepage = "https://github.com/colinahill/terrapyn"
 description = "Toolkit to manipulate Earth observations and models."
 authors = ["Colin Hill <colinalastairhill@gmail.com>"]
@@ -39,7 +39,8 @@ pre-commit = "*"
 line-length=120
 
 [tool.pytest.ini_options]
-addopts = "--cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --cov-fail-under 100"
+addopts = "--cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes"
+#  --cov-fail-under 100
 python_files = "tests.py test_*.py *_tests.py"
 
 [build-system]

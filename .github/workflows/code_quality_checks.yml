@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: poetry update
       - name: Check style with flake8
-        run: poetry run flake8 terrapyn/ tests/
+        run: poetry run flake8 --extend-ignore=D4 terrapyn/ tests/
       - name: Check format with black
         run: poetry run black --check terrapyn/ tests/
       - name: Check type hinting with mypy
