@@ -12,6 +12,15 @@ Toolkit to manipulate Earth observations and models.
 
 ## Setup
 
+Either:
+
 ```bash
 pip install terrapyn
+```
+
+Or after cloning the repository:
+
+```bash
+cd project-name/
+pip install poetry && poetry install
 ```

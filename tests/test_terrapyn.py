@@ -1,5 +1,3 @@
-"""Test module for terrapyn."""
-
 from terrapyn import __author__, __email__
 
 

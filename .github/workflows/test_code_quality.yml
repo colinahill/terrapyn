@@ -1,0 +1,31 @@
+name: Test Code Quality
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dev dependencies
+        run: pip install -e .[dev]
+      - name: Lint with Flake8
+        run: flake8 --extend-ignore=D4 terrapyn/ tests/
+      - name: Format with Black
+        run: black --check terrapyn/ tests/
+      - name: Type Checking MyPy
+        run: mypy --strict --config-file=mypy.ini terrapyn/
+      - name: Install dependencies
+        run: pip install -e .
+      - name: Unittest with Pytest
+        run: pytest terrapyn/ tests/
