@@ -17,15 +17,13 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
-      - name: Install dev dependencies
+      - name: Install dependencies
         run: pip install -e .[dev]
       - name: Lint with Flake8
-        run: flake8 --extend-ignore=D4 terrapyn/ tests/
+        run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
       - name: Format with Black
         run: black --check terrapyn/ tests/
-      - name: Type Checking MyPy
+      - name: Type Check with MyPy
         run: mypy --strict --config-file=mypy.ini terrapyn/
-      - name: Install dependencies
-        run: pip install -e .
-      - name: Unittest with Pytest
+      - name: Test & Coverage with Pytest
         run: pytest terrapyn/ tests/

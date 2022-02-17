@@ -1,23 +1,23 @@
 import datetime as dt
-import numpy as np
 import typing as T
+
+import numpy as np
+import pandas as pd
+import xarray as xr
 from dateutil.relativedelta import relativedelta
 
 # import dateutil
 # from dateutil import rrule
-import pandas as pd
-import xarray as xr
-
 # import pytz
 
 
 def datetime64_to_datetime(dt64=np.datetime64) -> dt.datetime:
-    """ Convert numpy.datetime64 to dt.datetime """
+    """Convert numpy.datetime64 to dt.datetime"""
     return np.datetime64(dt64, "us").astype(dt.datetime)
 
 
 def datetime_to_datetime64(time=dt.datetime) -> np.datetime64:
-    """ Convert dt.datetime to numpy.datetime64 """
+    """Convert dt.datetime to numpy.datetime64"""
     return np.datetime64(time)
 
 

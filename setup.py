@@ -1,4 +1,5 @@
 import os
+
 import setuptools
 
 version = os.getenv("VERSION", "0.0.1")
@@ -33,6 +34,7 @@ dev_install_requires = [
     "flake8-colors",
     "black",
     "mypy",
+    "isort",
     "pre-commit",
     "freezegun",
 ]
