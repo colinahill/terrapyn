@@ -23,7 +23,7 @@ jobs:
         run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
       - name: Format with Black
         run: black --check terrapyn/ tests/
-      - name: Type Check with MyPy
-        run: mypy --strict --config-file=mypy.ini terrapyn/
+      # - name: Type Check with MyPy
+      #   run: mypy --strict --config-file=mypy.ini terrapyn/
       - name: Test & Coverage with Pytest
         run: pytest terrapyn/ tests/
