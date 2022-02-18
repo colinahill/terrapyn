@@ -45,7 +45,7 @@ setuptools.setup(
     url="https://github.com/colinahill/terrapyn",
     description="Toolkit to manipulate Earth observations and models.",
     author="Colin Hill",
-    author_email="colinalastairhill@gmail.com>",
+    author_email="colinalastairhill@gmail.com",
     long_description=long_description,
     long_description_content_type="text/markdown",
     # readme = "README.md",
