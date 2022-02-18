@@ -1,0 +1,59 @@
+[1m============================= test session starts ==============================[0m
+platform darwin -- Python 3.8.5, pytest-6.2.5, py-1.11.0, pluggy-1.0.0 -- /Users/chill/software/anaconda3/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/chill/software/terrapyn, configfile: pyproject.toml
+plugins: anyio-3.5.0, cookies-0.6.1, cov-3.0.0
+[1mcollecting ... [0mcollected 18 items
+
+tests/test_terrapyn.py::test_project_info [32mPASSED[0m[33m                         [  5%][0m
+tests/test_time.py::TestConvertDatetime64::test_object_type [32mPASSED[0m[33m       [ 11%][0m
+tests/test_time.py::TestConvertDatetime::test_object_type [32mPASSED[0m[33m         [ 16%][0m
+tests/test_time.py::TestGetTimeFromData::test_dataarray [32mPASSED[0m[33m           [ 22%][0m
+tests/test_time.py::TestGetTimeFromData::test_dataframe [32mPASSED[0m[33m           [ 27%][0m
+tests/test_time.py::TestGetTimeFromData::test_dataframe_time_column [32mPASSED[0m[33m [ 33%][0m
+tests/test_time.py::TestGetTimeFromData::test_dataset [32mPASSED[0m[33m             [ 38%][0m
+tests/test_time.py::TestGetTimeFromData::test_datetime [32mPASSED[0m[33m            [ 44%][0m
+tests/test_time.py::TestGetTimeFromData::test_datetimeindex [32mPASSED[0m[33m       [ 50%][0m
+tests/test_time.py::TestGetTimeFromData::test_invalid_datatype [32mPASSED[0m[33m    [ 55%][0m
+tests/test_time.py::TestGetTimeFromData::test_list [32mPASSED[0m[33m                [ 61%][0m
+tests/test_time.py::TestGetTimeFromData::test_ndarray [32mPASSED[0m[33m             [ 66%][0m
+tests/test_time.py::TestGetTimeFromData::test_series_time_column [32mPASSED[0m[33m  [ 72%][0m
+tests/test_time.py::TestGetTimeFromData::test_series_time_index [32mPASSED[0m[33m   [ 77%][0m
+tests/test_time.py::test_groupby_time::test_dataarray_groupby_week [32mPASSED[0m[33m [ 83%][0m
+tests/test_time.py::test_groupby_time::test_dataframe_groupby_pentad [32mPASSED[0m[33m [ 88%][0m
+tests/test_time.py::test_groupby_time::test_dataset_groupby_week [32mPASSED[0m[33m  [ 94%][0m
+tests/test_time.py::test_groupby_time::test_series_groupby_dekad [32mPASSED[0m[33m  [100%][0m
+
+[33m=============================== warnings summary ===============================[0m
+../anaconda3/lib/python3.8/site-packages/xarray/backends/cfgrib_.py:27
+  /Users/chill/software/anaconda3/lib/python3.8/site-packages/xarray/backends/cfgrib_.py:27: UserWarning: Failed to load cfgrib - most likely there is a problem accessing the ecCodes library. Try `import cfgrib` to get the full error message
+    warnings.warn(
+
+../anaconda3/lib/python3.8/site-packages/h5py/__init__.py:46
+  /Users/chill/software/anaconda3/lib/python3.8/site-packages/h5py/__init__.py:46: DeprecationWarning: `np.typeDict` is a deprecated alias for `np.sctypeDict`.
+    from ._conv import register_converters as _register_converters
+
+../anaconda3/lib/python3.8/site-packages/pydap/model.py:175
+  /Users/chill/software/anaconda3/lib/python3.8/site-packages/pydap/model.py:175: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.9 it will stop working
+    from collections import OrderedDict, Mapping
+
+../anaconda3/lib/python3.8/site-packages/pydap/responses/das.py:14
+  /Users/chill/software/anaconda3/lib/python3.8/site-packages/pydap/responses/das.py:14: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.9 it will stop working
+    from collections import Iterable
+
+../anaconda3/lib/python3.8/site-packages/xarray/backends/plugins.py:68
+  /Users/chill/software/anaconda3/lib/python3.8/site-packages/xarray/backends/plugins.py:68: RuntimeWarning: Engine 'cfgrib' loading failed:
+  Cannot find the ecCodes library
+    warnings.warn(f"Engine {name!r} loading failed:\n{ex}", RuntimeWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/warnings.html
+
+---------- coverage: platform darwin, python 3.8.5-final-0 -----------
+Name                   Stmts   Miss Branch BrPart  Cover   Missing
+------------------------------------------------------------------
+terrapyn/__init__.py       4      0      0      0   100%
+terrapyn/time.py          78     13     42      7    80%   80, 183, 185, 187, 193-194, 206-208, 254, 301-303
+------------------------------------------------------------------
+TOTAL                     82     13     42      7    81%
+
+[33m======================== [32m18 passed[0m, [33m[1m5 warnings[0m[33m in 3.96s[0m[33m ========================[0m
