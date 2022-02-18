@@ -36,6 +36,7 @@ dev_install_requires = [
     "isort",
     "pre-commit",
     "freezegun",
+    "coverage-badge",
 ]
 
 setuptools.setup(
