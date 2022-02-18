@@ -28,4 +28,4 @@ jobs:
       - name: Test & Coverage with Pytest
         run: pytest terrapyn/ tests/
       - name: Generate coverage badge
-        run: coverage-badge -f .github/coverage.svg
+        run: coverage-badge -f -o .github/coverage.svg
