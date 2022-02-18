@@ -27,3 +27,5 @@ jobs:
       #   run: mypy --strict --config-file=mypy.ini terrapyn/
       - name: Test & Coverage with Pytest
         run: pytest terrapyn/ tests/
+      - name: Generate coverage badge
+        run: pip install coverage-badge && coverage-badge -o .github/coverage.svg
