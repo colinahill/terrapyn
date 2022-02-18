@@ -1,10 +1,12 @@
-import terrapyn as tp
-from pathlib import Path
-import unittest
-import pandas as pd
-import numpy as np
 import datetime as dt
+import unittest
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 import xarray as xr
+
+import terrapyn as tp
 
 # import calendar
 # from freezegun import freeze_time
@@ -88,20 +90,20 @@ class TestGetTimeFromData(unittest.TestCase):
 
 class test_groupby_time(unittest.TestCase):
 
-    ds = xr.open_dataset(TEST_DATA_PATH / "high_resolution_365_days_test_data.nc")
+    ds = xr.open_dataset(TEST_DATA_PATH / "lat_2_lon_2_time_15_D_test_data.nc")
 
     def test_dataset_groupby_week(self):
         result = tp.time.groupby_time(self.ds, grouping="week")
-        self.assertEqual(result.groups, {8: [0, 1, 2], 9: [3, 4]})
+        self.assertEqual(result.groups, {8: [0, 1, 2, 3, 4], 9: [5, 6, 7, 8, 9, 10, 11], 10: [12, 13, 14]})
 
     def test_dataarray_groupby_week(self):
         result = tp.time.groupby_time(self.ds["var"], grouping="week")
-        self.assertEqual(result.groups, {8: [0, 1, 2], 9: [3, 4]})
+        self.assertEqual(result.groups, {8: [0, 1, 2, 3, 4], 9: [5, 6, 7, 8, 9, 10, 11], 10: [12, 13, 14]})
 
     def test_dataframe_groupby_pentad(self):
         result = tp.time.groupby_time(self.ds.to_dataframe(), grouping="pentad")
-        np.testing.assert_almost_equal(result.sum().values, np.array([[1788.91321445], [448.59772361]]))
+        np.testing.assert_almost_equal(result.sum().values, np.array([[272.59223017], [257.44398154], [295.72954042]]))
 
     def test_series_groupby_dekad(self):
         result = tp.time.groupby_time(self.ds.to_dataframe()["var"], grouping="dekad")
-        np.testing.assert_almost_equal(result.sum().values, np.array([1338.66976258, 898.84117548]))
+        np.testing.assert_almost_equal(result.sum().values, np.array([80.23334597, 412.85991647, 332.67248968]))

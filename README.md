@@ -12,15 +12,20 @@ Toolkit to manipulate Earth observations and models.
 
 ## Setup
 
-Either:
+An Anaconda Python distribution is required, as this significantly simplifies installation.
+
+Either `Conda` or `Miniconda` are suitable: see [conda installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
+
+Once the conda environment is installed, this repo can be cloned and installed from source:
+
+```bash
+git clone https://github.com/colinahill/terrapyn.git
+cd terrapyn
+python setup.py install
+```
+
+Or installed via pip
 
 ```bash
 pip install terrapyn
-```
-
-Or after cloning the repository:
-
-```bash
-cd project-name/
-pip install poetry && poetry install
 ```

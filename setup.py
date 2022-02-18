@@ -14,14 +14,13 @@ install_requires = [
     "pandas",
     "xarray",
     "scipy",
+    "netcdf4",
     "dask",
-    "typing",
-    "netCDF4",
-    "matplotlib",
-    "seaborn",
-    "bottleneck",
+    # "cfgrib",
+    # "eccodes"
     # "geopandas",
     # "shapely",
+    # "xoa"
 ]
 
 dev_install_requires = [
