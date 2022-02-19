@@ -18,7 +18,7 @@ install_requires = [
     "dask",
     # "cfgrib",
     # "eccodes"
-    # "geopandas",
+    "geopandas",
     # "shapely",
     # "xoa"
 ]
