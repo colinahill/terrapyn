@@ -156,6 +156,10 @@ class TestDailyDateRange(unittest.TestCase):
         result = tp.time.daily_date_range(delta_days=-1)
         self.assertEqual(result, [dt.datetime(2012, 1, 13, 0, 0), dt.datetime(2012, 1, 14, 0, 0)])
 
+    def test_delta_days_future(self):
+        result = tp.time.daily_date_range(delta_days=1)
+        self.assertEqual(result, [dt.datetime(2012, 1, 14, 0, 0), dt.datetime(2012, 1, 15, 0, 0)])
+
     def test_future_dates(self):
         result = tp.time.daily_date_range(end_time=dt.datetime(2012, 1, 16), reset_time=True, hours=6)
         self.assertEqual(
@@ -201,6 +205,10 @@ class TestAddDayOfYearVariable(unittest.TestCase):
         result = tp.time.add_day_of_year_variable(self.ds, modify_ordinal_days=False)
         np.testing.assert_equal(result["dayofyear"].values[58:62], np.array([59, 60, 61, 62]))
 
+    def test_dataarray(self):
+        result = tp.time.add_day_of_year_variable(self.ds["var"], modify_ordinal_days=False)
+        np.testing.assert_equal(result["dayofyear"].values[58:62], np.array([59, 60, 61, 62]))
+
 
 class TestCheckStartEndTimeValidity(unittest.TestCase):
     def test_datetime64_with_datetime64(self):
@@ -230,6 +238,10 @@ class TestCheckStartEndTimeValidity(unittest.TestCase):
         out, err = self.capfd.readouterr()
         self.assertFalse(result)
         assert out == "Warning: End time 2014-01-01 00:00:00 before start time 2014-01-02 00:00:00\n"
+
+    def test_missing_time(self):
+        with self.assertRaises(ValueError):
+            tp.time.check_start_end_time_validity(None, dt.datetime(2014, 1, 2))
 
 
 class TestGetDayOfYear(unittest.TestCase):
@@ -261,6 +273,23 @@ class TestGetDayOfYear(unittest.TestCase):
         np.testing.assert_equal(result, np.array([61]))
 
 
+# class TestListTimezones(unittest.TestCase):
+#     @pytest.fixture(autouse=True)
+#     def capfd(self, capfd):
+#         self.capfd = capfd
+
+#     def test_first_in_list(self):
+#         result = tp.time.list_timezones()
+#         out, err = self.capfd.readouterr()
+#         assert out[:15] == 'America/Tortola'
+
+
+class TestTimeToLocalTime(unittest.TestCase):
+    def test_invalid_string(self):
+        with self.assertRaises(TypeError):
+            tp.time.time_to_local_time(dt.datetime(2019, 3, 15, 1, 0), timezone_name=1)
+
+
 class TestDataToLocalTime(unittest.TestCase):
     expected = pd.DatetimeIndex(
         ["2019-03-15 01:00:00", "2019-03-15 02:00:00"], dtype="datetime64[ns]", name="time", freq=None
@@ -269,13 +298,26 @@ class TestDataToLocalTime(unittest.TestCase):
         {"time": pd.date_range("2019-03-15", freq="h", periods=2), "id": ["a", "b"], "val": [1, 2]}
     ).set_index(["time", "id"])
 
-    def test_dataframe(self):
+    def test_dataframe_multiindex(self):
         results = tp.time.data_to_local_time(self.df.copy(), "CET").index.get_level_values("time")
         pd.testing.assert_index_equal(results, self.expected)
+
+    def test_dataframe(self):
+        test_df = self.df.copy().reset_index(drop=False).set_index("time")
+        results = tp.time.data_to_local_time(test_df, "CET").index.get_level_values("time")
+        pd.testing.assert_index_equal(results, self.expected)
+
+    def test_dataframe_column(self):
+        results = tp.time.data_to_local_time(self.df.reset_index(drop=False).copy(), "CET", time_dim="time")["time"]
+        np.testing.assert_equal(results.values, self.expected.values)
 
     def test_series(self):
         results = tp.time.data_to_local_time(self.df.copy()["val"], "CET").index.get_level_values("time")
         pd.testing.assert_index_equal(results, self.expected)
+
+    def test_series_values(self):
+        results = tp.time.data_to_local_time(pd.Series(self.expected), "CET").values
+        np.testing.assert_equal(results, pd.Series(self.expected) + pd.Timedelta("1h"))
 
     def test_dataset(self):
         results = tp.time.data_to_local_time(self.df.copy().to_xarray(), "CET").indexes["time"]
@@ -288,6 +330,26 @@ class TestDataToLocalTime(unittest.TestCase):
     def test_datetime(self):
         results = tp.time.data_to_local_time(dt.datetime(2019, 3, 15, 1, 0), "CET")[0]
         self.assertTrue(results, dt.datetime(2019, 3, 15, 2, 0))
+
+    def test_missing_timezone(self):
+        with self.assertRaises(ValueError):
+            tp.time.data_to_local_time(dt.datetime(2019, 3, 15, 1, 0), None)
+
+    def test_datetimeindex(self):
+        results = tp.time.data_to_local_time(self.expected - pd.Timedelta("1h"), "CET")
+        pd.testing.assert_index_equal(results, self.expected)
+
+    def test_ndarray(self):
+        results = tp.time.data_to_local_time(self.expected.values - np.timedelta64(1, "h"), "CET")
+        pd.testing.assert_index_equal(results, self.expected)
+
+    def test_list(self):
+        results = tp.time.data_to_local_time([dt.datetime(2019, 3, 15, 1, 0)], "CET")
+        self.assertEqual(results.to_pydatetime(), [dt.datetime(2019, 3, 15, 2, 0)])
+
+    def test_invalid_data_type(self):
+        with self.assertRaises(TypeError):
+            tp.time.data_to_local_time(1, "CET")
 
 
 class TestEnsureDatetimeIndex(unittest.TestCase):
@@ -378,6 +440,11 @@ class TestSetTimeInData(unittest.TestCase):
         expected = pd.DatetimeIndex(
             ["2020-12-31 19:00:00", "2021-01-01 19:00:00"], dtype="datetime64[ns]", name="time", freq=None
         )
+        pd.testing.assert_index_equal(results, expected)
+
+    def test_no_modification(self):
+        results = tp.time._set_time_in_data(self.df).index.get_level_values("time")
+        expected = self.df.index.get_level_values("time")
         pd.testing.assert_index_equal(results, expected)
 
 

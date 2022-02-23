@@ -3,7 +3,12 @@ import typing as T
 
 import numpy as np
 import pandas as pd
-import pytz
+
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
+
 import xarray as xr
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
@@ -306,6 +311,8 @@ def datetime_to_dekad_number(
         array([4])
 
     """
+    if isinstance(dates, (dt.datetime, np.datetime64)):
+        dates = [dates]
     dates = pd.DatetimeIndex(dates)
     count = np.digitize(dates.day, bins=[10, 20], right=True) + 1  # Add 1 since bins start at zero
     dekads = (dates.month - 1) * 3 + count
@@ -563,12 +570,12 @@ def list_timezones():
     """
     List all available timezones.
     """
-    print("\n".join(pytz.all_timezones))
+    return zoneinfo.available_timezones()
 
 
 def time_to_local_time(
     times: T.Union[dt.datetime, pd.Timestamp, pd.DatetimeIndex] = None, timezone_name: str = "UTC"
-) -> T.Union[dt.datetime, pd.Timestamp]:
+) -> T.Union[dt.datetime, pd.Timestamp, pd.DatetimeIndex]:
     """
     Apply a timezone / daylight-savings-time (dst) offset to a (naive) datetime object.
     The datetimes in `times` are assumed to be in UTC if there are timezone-naive
@@ -593,9 +600,9 @@ def time_to_local_time(
         Timestamp('2020-03-29 03:15:00')
 
     Example 3: Timezone has been set. Convert Egypt time to Central Europe time
-        >>> date = dt.datetime(2020, 3, 2, 1, 15).astimezone(pytz.timezone('Africa/Cairo'))
+        >>> date = dt.datetime(2020, 3, 2, 1, 15, tzinfo=zoneinfo.ZoneInfo('Africa/Cairo'))
         >>> time_to_local_time(date, timezone_name='CET')
-        Timestamp('2020-03-02 02:15:00')
+        Timestamp('2020-03-02 00:15:00')
 
     Example 4: Pandas DatetimeIndex. Convert UTC to Sao Paulo, Brazil time
         >>> times = pd.date_range("2001-02-03 ", periods=3, freq='h') # Starts at 2001-02-03T00h00
@@ -641,7 +648,7 @@ def _datetime_to_UTC(times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.Dat
     times = _ensure_datetimeindex(times)
 
     if times.tzinfo is None:
-        # Assume tims are in UTC nad localize time to UTC
+        # Assume times are in UTC and localize time to UTC
         return times.tz_localize(tz="UTC")
     else:
         # Convert times to UTC
@@ -815,6 +822,8 @@ def data_to_local_time(
             data = data.assign_coords({time_dim: times})
         elif isinstance(data, (np.ndarray, list, dt.datetime, pd.DatetimeIndex)):
             data = times
+        else:
+            raise TypeError(f"Data type of {type(data)} not implemented")
     return data
 
 

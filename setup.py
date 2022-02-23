@@ -21,6 +21,8 @@ install_requires = [
     "geopandas",
     # "shapely",
     # "xoa"
+    # "zoneinfo",
+    "backports.zoneinfo",
 ]
 
 dev_install_requires = [
