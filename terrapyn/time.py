@@ -1,14 +1,9 @@
 import datetime as dt
 import typing as T
+import zoneinfo
 
 import numpy as np
 import pandas as pd
-
-try:
-    import zoneinfo
-except ImportError:
-    from backports import zoneinfo
-
 import xarray as xr
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
@@ -190,7 +185,7 @@ def groupby_time(
         Groupby object (pandas or xarray type)
     """
     # Extract/Convert the `time_dim` to a pandas.DatetimeIndex
-    times = get_time_from_data(data)
+    times = get_time_from_data(data, time_dim=time_dim)
 
     if grouping == "week":
         time_groups = times.isocalendar().week
@@ -583,7 +578,7 @@ def time_to_local_time(
 
     Args:
         times: Datetimes where timezone-naive times are assumed to be in UTC, or the timezone is set.
-        timezone_name: The name of the timezone, understood by `pytz.timezone`.
+        timezone_name: The name of the timezone, understood by `zoneinfo`.
         Use `time.list_timezones()` to view all possible options.
 
     Returns:
@@ -664,7 +659,7 @@ def _datetimeindex_to_local_time_tz_aware(
 
     Args:
         times: Datetimes can be timezone naive or have timezone set.
-        timezone_name: Name of the timezone - understood by `pytz.timezone` or `dateutil.tz.tzfile`
+        timezone_name: Name of the timezone, understood by `zoneinfo`
 
     Returns:
         Datetimes where the required offset has been applied to the time
@@ -689,7 +684,7 @@ def _datetimeindex_to_local_time_tz_naive(
 
     Args:
         times: Datetimes where the time is in UTC - can be timezone naive or have timezone set to 'UTC'
-        timezone_name: Name of the timezone - understood by `pytz.timezone` or `dateutil.tz.tzfile`
+        timezone_name: Name of the timezone, understood by `zoneinfo`
 
     Returns:
         Datetimes where the required offset has been applied to the time, and the datetimes are returned
@@ -715,7 +710,7 @@ def utc_offset_in_hours(
     Args:
         times: Timestamps, assumed to be in UTC (if timezone-naive or no timezone is set). Timestamps can
         be timezone-naive (no `tz` has been set), or have a timezone set.
-        timezone_name: Name of the timezone - understood by `pytz.timezone` or `dateutil.tz.tzfile`
+        timezone_name: Name of the timezone, understood by `zoneinfo`
 
     Returns:
         Offset in decimal hours between the given timezone and UTC.
@@ -755,7 +750,7 @@ def _set_time_in_data(
 
         if hours_to_subtract is not None:
             # Subtract some number of hours from the times, ignoring `set_time_to_midnight`
-            new_times = get_time_from_data(data) - dt.timedelta(hours=hours_to_subtract)
+            new_times = get_time_from_data(data, time_dim=time_dim) - dt.timedelta(hours=hours_to_subtract)
 
         elif set_time_to_midnight is not True:
             # Nothing to do so return un-modified data
@@ -763,7 +758,7 @@ def _set_time_in_data(
 
         else:
             # Reinitialize the time component of the datetime to midnight i.e. 00:00:00, ignoring `hours_to_subtract`
-            new_times = get_time_from_data(data).normalize()
+            new_times = get_time_from_data(data, time_dim=time_dim).normalize()
 
     return utils.set_dim_values_in_data(data=data, values=new_times, dim=time_dim)
 
@@ -779,7 +774,7 @@ def data_to_local_time(
 
     Args:
         data: Data with time coordinate/index/column. Datetimes are assumed to be in UTC if the timezone is not set.
-        timezone_name: The name of the target timezone, understood by `pytz.timezone`.
+        timezone_name: The name of the target timezone, understood by `zoneinfo`.
         Use `list_timezones()` to view all possible options.
         time_dim: The name of the time dimension/coordinate/column.
 
@@ -802,29 +797,13 @@ def data_to_local_time(
     if timezone_name is None:
         raise ValueError("`timezone_name` must be given")
     else:
-        times = get_time_from_data(data)
+        times = get_time_from_data(data, time_dim=time_dim)
         times = time_to_local_time(times, timezone_name)
 
-        if isinstance(data, (pd.Series, pd.DataFrame)):
-            if time_dim in data.index.names:
-                if isinstance(data.index, pd.MultiIndex):
-                    data.index = data.index.set_levels(times, level=time_dim)
-                else:
-                    data.index = times
-            else:
-                if isinstance(data, pd.Series):
-                    # Update values of series, not index
-                    data.update(times)
-                else:
-                    # update column of dataframe
-                    data[time_dim] = times
-        elif isinstance(data, (xr.Dataset, xr.DataArray)):
-            data = data.assign_coords({time_dim: times})
-        elif isinstance(data, (np.ndarray, list, dt.datetime, pd.DatetimeIndex)):
-            data = times
+        if isinstance(data, (np.ndarray, list, dt.datetime, pd.DatetimeIndex)):
+            return times
         else:
-            raise TypeError(f"Data type of {type(data)} not implemented")
-    return data
+            return utils.set_dim_values_in_data(data=data, values=times, dim=time_dim)
 
 
 ################################################
@@ -958,7 +937,7 @@ def data_to_local_time(
 #         resample_method: Resample method ('mean', 'sum', 'max' or 'min').
 #         day_start_hour: The hour of the day that is used as the start of the day (so 1 complete day is from
 #         `day_start_hour` to `day_start_hour` + 24h).
-#         timezone_name: Name of the timezone, understood by `pytz.timezone` or `dateutil.tz.tzfile`
+#         timezone_name: Name of the timezone, understood by `zoneinfo`
 #         return_local_time: Return the data with the local times instead of the resample times, where the
 #         resample times are taken as the nearest multiple of the `data_timestep_freq` for a given UTC
 #         offset offset (i.e. for 6h timesteps and timezone UTC-5, the data are resampled using multiples of 6h,
@@ -983,7 +962,7 @@ def data_to_local_time(
 #         if data_timestep_freq is None:
 #             raise ValueError("`data_timestep_freq` must be given when resampling in a non-UTC timezone.")
 
-#         times = get_time_from_data(data)
+#         times = get_time_from_data(data, time_dim=time_dim)
 
 #         # Get appropriate UTC offset to apply to the data
 #         utc_offset_hours = utc_offset_in_hours(times, timezone_name)

@@ -1,11 +1,11 @@
 import datetime as dt
 import unittest
+import zoneinfo
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
-import pytz
 import xarray as xr
 from freezegun import freeze_time
 
@@ -347,9 +347,21 @@ class TestDataToLocalTime(unittest.TestCase):
         results = tp.time.data_to_local_time([dt.datetime(2019, 3, 15, 1, 0)], "CET")
         self.assertEqual(results.to_pydatetime(), [dt.datetime(2019, 3, 15, 2, 0)])
 
+    @pytest.fixture(autouse=True)
+    def capfd(self, capfd):
+        self.capfd = capfd
+
     def test_invalid_data_type(self):
         with self.assertRaises(TypeError):
-            tp.time.data_to_local_time(1, "CET")
+            out, err = self.capfd.readouterr()
+            _ = tp.time.data_to_local_time(1, "CET")
+            assert out == "Data type of int not implemented"
+
+
+class TestListTimezones(unittest.TestCase):
+    def test_dict_type(self):
+        result = tp.time.list_timezones()
+        self.assertTrue(isinstance(result, set))
 
 
 class TestEnsureDatetimeIndex(unittest.TestCase):
@@ -378,8 +390,8 @@ class TestDatetimeToUTC(unittest.TestCase):
         pd.testing.assert_index_equal(result, expected)
 
     def test_timezone_set(self):
-        result = tp.time._datetime_to_UTC(dt.datetime(2021, 4, 5, tzinfo=pytz.timezone("CET")))
-        expected = pd.DatetimeIndex(["2021-04-04 23:00:00+00:00"], dtype="datetime64[ns, UTC]", name="time", freq=None)
+        result = tp.time._datetime_to_UTC(dt.datetime(2021, 4, 5, tzinfo=zoneinfo.ZoneInfo("CET")))
+        expected = pd.DatetimeIndex(["2021-04-04 22:00:00+00:00"], dtype="datetime64[ns, UTC]", name="time", freq=None)
         pd.testing.assert_index_equal(result, expected)
 
 
@@ -391,9 +403,9 @@ class TestDatetimeindexToLocalTimeTzAware(unittest.TestCase):
 
     def test_timezone_set(self):
         result = tp.time._datetimeindex_to_local_time_tz_aware(
-            dt.datetime(2021, 4, 5, tzinfo=pytz.timezone("CET")), "EST"
+            dt.datetime(2021, 4, 5, tzinfo=zoneinfo.ZoneInfo("CET")), "EST"
         )
-        expected = pd.DatetimeIndex(["2021-04-04 18:00:00-05:00"], dtype="datetime64[ns, EST]", name="time", freq=None)
+        expected = pd.DatetimeIndex(["2021-04-04 17:00:00-05:00"], dtype="datetime64[ns, EST]", name="time", freq=None)
         pd.testing.assert_index_equal(result, expected)
 
 
@@ -404,10 +416,8 @@ class TestDatetimeindexToLocalTimeTzNaive(unittest.TestCase):
         pd.testing.assert_index_equal(result, expected)
 
     def test_timezone_set(self):
-        result = tp.time._datetimeindex_to_local_time_tz_naive(
-            dt.datetime(2021, 4, 5, tzinfo=pytz.timezone("CET")), "EST"
-        )
-        expected = pd.DatetimeIndex(["2021-04-04 18:00:00"], dtype="datetime64[ns]", name="time", freq=None)
+        result = tp.time._datetimeindex_to_local_time_tz_naive(dt.datetime(2021, 4, 5, tzinfo=zoneinfo.ZoneInfo("CET")))
+        expected = pd.DatetimeIndex(["2021-04-04 22:00:00"], dtype="datetime64[ns]", name="time", freq=None)
         pd.testing.assert_index_equal(result, expected)
 
 

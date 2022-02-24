@@ -16,13 +16,11 @@ install_requires = [
     "scipy",
     "netcdf4",
     "dask",
-    # "cfgrib",
-    # "eccodes"
+    "cfgrib",
+    "eccodes",
     "geopandas",
     # "shapely",
     # "xoa"
-    # "zoneinfo",
-    "backports.zoneinfo",
 ]
 
 dev_install_requires = [
@@ -57,7 +55,6 @@ setuptools.setup(
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
