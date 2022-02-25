@@ -11,9 +11,6 @@ from freezegun import freeze_time
 
 import terrapyn as tp
 
-# import calendar
-
-
 PACKAGE_ROOT_DIR = Path(__file__).resolve().parent.parent
 TEST_DATA_PATH = PACKAGE_ROOT_DIR / "tests" / "data"
 
@@ -273,17 +270,6 @@ class TestGetDayOfYear(unittest.TestCase):
         np.testing.assert_equal(result, np.array([61]))
 
 
-# class TestListTimezones(unittest.TestCase):
-#     @pytest.fixture(autouse=True)
-#     def capfd(self, capfd):
-#         self.capfd = capfd
-
-#     def test_first_in_list(self):
-#         result = tp.time.list_timezones()
-#         out, err = self.capfd.readouterr()
-#         assert out[:15] == 'America/Tortola'
-
-
 class TestTimeToLocalTime(unittest.TestCase):
     def test_invalid_string(self):
         with self.assertRaises(TypeError):
@@ -478,3 +464,114 @@ class TestUTCOffsetInHours(unittest.TestCase):
             pd.date_range("2019-01-02", freq="6H", periods=2), "Asia/Kolkata", return_single_value=False
         )
         self.assertEqual(result, [5.5, 5.5])
+
+
+class TestGroupbyFreq(unittest.TestCase):
+    ds = xr.Dataset(
+        data_vars={"var": (("lat", "lon", "time"), np.ones((1, 1, 100)))},
+        coords={"lat": [1], "lon": [2], "time": pd.date_range("2022-01-01", periods=100)},
+    )
+
+    ds_hourly = xr.Dataset(
+        data_vars={"var": (("lat", "lon", "time"), np.arange(100)[np.newaxis, np.newaxis, :])},
+        coords={"lat": [1], "lon": [2], "time": pd.date_range("2022-01-01", periods=100, freq="h")},
+    )
+
+    ds_hourly_multicoord = xr.Dataset(
+        data_vars={"var": (("lat", "lon", "time"), np.full((2, 2, 100), np.arange(100)))},
+        coords={"lat": [1, 2], "lon": [3, 4], "time": pd.date_range("2022-01-01", periods=100, freq="h")},
+    )
+
+    def test_dataset(self):
+        result = tp.time.groupby_freq(self.ds, freq="M").sum()["var"].values.flatten()
+        expected = np.array([30.0, 28.0, 31.0, 11.0])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_dataarray(self):
+        result = tp.time.groupby_freq(self.ds["var"], freq="M").sum().values.flatten()
+        expected = np.array([30.0, 28.0, 31.0, 11.0])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_dataframe(self):
+        result = tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="M").sum()["var"].values
+        expected = np.array([30.0, 28.0, 31.0, 11.0])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_series(self):
+        result = tp.time.groupby_freq(self.ds["var"].to_series(), freq="M").sum().values
+        expected = np.array([30.0, 28.0, 31.0, 11.0])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_dataset_hourly_to_daily(self):
+        result = tp.time.groupby_freq(self.ds_hourly, freq="D", day_start_hour=6).sum()["var"].values.flatten()
+        expected = np.array([15, 420, 996, 1572, 1947])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_dataframe_hourly_to_daily(self):
+        result = tp.time.groupby_freq(self.ds_hourly.to_dataframe(), freq="D", day_start_hour=6).sum()["var"]
+        expected = np.array([15, 420, 996, 1572, 1947])
+        np.testing.assert_array_equal(result.values, expected)
+        self.assertEqual(result.index.names, ["time", "lat", "lon"])
+
+    def test_series_hourly_to_daily_single_index(self):
+        result = tp.time.groupby_freq(
+            self.ds_hourly["var"].to_series().reset_index(drop=True, level=["lat", "lon"]), freq="D", day_start_hour=6
+        ).sum()
+        expected = np.array([15, 420, 996, 1572, 1947])
+        np.testing.assert_array_equal(result.values, expected)
+        self.assertEqual(result.index.name, "time")
+
+    def test_dataframe_no_time_dim(self):
+        with self.assertRaises(ValueError):
+            tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="M", time_dim="x")
+
+    def test_series_no_time_dim(self):
+        with self.assertRaises(ValueError):
+            tp.time.groupby_freq(self.ds["var"].to_series(), freq="M", time_dim="x")
+
+    def test_dataframe_time_column(self):
+        result = (
+            tp.time.groupby_freq(self.ds["var"].to_dataframe().reset_index(drop=False), freq="M").sum()["var"].values
+        )
+        expected = np.array([30.0, 28.0, 31.0, 11.0])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_dataframe_time_column_other_cols(self):
+        result = (
+            tp.time.groupby_freq(
+                self.ds_hourly_multicoord.to_dataframe().reset_index(drop=False), freq="D", other_grouping_columns="lat"
+            )
+            .sum()["lon"]
+            .values
+        )
+        expected = np.array([168, 168, 168, 168, 168, 168, 168, 168, 28, 28])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_invalid_datatype(self):
+        with self.assertRaises(TypeError):
+            tp.time.groupby_freq([1])
+
+
+class TestResampleTime(unittest.TestCase):
+    ds_hourly = xr.Dataset(
+        data_vars={"var": (("lat", "lon", "time"), np.arange(100)[np.newaxis, np.newaxis, :])},
+        coords={"lat": [1], "lon": [2], "time": pd.date_range("2022-01-01", periods=100, freq="h")},
+    )
+
+    def test_dataset_sum(self):
+        result = tp.time.resample_time(self.ds_hourly, freq="D", day_start_hour=6, resample_method="sum")
+        expected = np.array([15, 420, 996, 1572, 1947])
+        self.assertEqual(result["time"].values[0], np.datetime64("2021-12-31T06:00:00.00"))
+        np.testing.assert_array_equal(result["var"].values.flatten(), expected)
+
+    def test_dataset_mean(self):
+        result = tp.time.resample_time(self.ds_hourly, resample_method="mean")["var"].values.flatten()
+        np.testing.assert_array_equal(result, np.array([11.5, 35.5, 59.5, 83.5, 97.5]))
+
+    def test_dataset_max(self):
+        result = tp.time.resample_time(self.ds_hourly, resample_method="max")["var"].values.flatten()
+        np.testing.assert_array_equal(result, np.array([23, 47, 71, 95, 99]))
+
+    def test_dataset_min(self):
+        result = tp.time.resample_time(self.ds_hourly, resample_method="min")["var"].values.flatten()
+        np.testing.assert_array_equal(result, np.array([0, 24, 48, 72, 96]))

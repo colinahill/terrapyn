@@ -856,13 +856,31 @@ def groupby_freq(
 
     Returns:
         Groupby object with data grouped by the given frequency.
+
+    Example: xr.Dataset / pd.DataFrame group by month
+        >>> ds = xr.Dataset(data_vars={"var": (("lat", "lon", "time"), np.ones((1, 1, 100)))},
+        ... coords={"lat": [1], "lon": [2], "time": pd.date_range("2022-01-01", periods=100)})
+        >>> groupby_freq(ds, freq="M")
+        DatasetResample, grouped over '__resample_dim__'
+        4 groups with labels 2022-01-31, ..., 2022-04-30.
+        >>> groupby_freq(ds['var'].to_dataframe(), freq="M").sum()
+                             var
+        time       lat lon
+        2022-01-31 1   2    30.0
+        2022-02-28 1   2    28.0
+        2022-03-31 1   2    31.0
+        2022-04-30 1   2    11.0
     """
     # The offset in hours to apply to the data to account for the day start hour
     offset = dt.timedelta(hours=day_start_hour)
 
     if isinstance(data, (xr.DataArray, xr.Dataset)):
 
-        return data.resample({time_dim: freq}, base=day_start_hour, loffset=offset, closed=closed)
+        # Bug with xarray.Dataset.resample where it ignores the `base` argument, so a workaround is
+        # implemented here, where the times are modified and `loffset` is used to re-label the time
+        return _set_time_in_data(data, time_dim=time_dim, hours_to_subtract=day_start_hour).resample(
+            {time_dim: freq}, loffset=str(day_start_hour) + "H", closed=closed
+        )
 
     elif isinstance(data, (pd.Series, pd.DataFrame)):
 
@@ -877,21 +895,31 @@ def groupby_freq(
                 )
             else:
                 return data.groupby(pd.Grouper(level=time_dim, freq=freq, offset=offset, closed=closed))
-
-        elif isinstance(data, pd.DataFrame):
-            if time_dim in data.columns:
-
-                if other_grouping_columns is not None:
-                    other_grouping_columns = utils.ensure_list(other_grouping_columns)
-
-                    return data.groupby(
-                        [pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_columns]
-                    )
-                else:
-                    return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
-
         else:
+            if isinstance(data, pd.DataFrame):
+                # time_dim not in index, look in columns for DataFrames
+                if time_dim in data.columns:
+
+                    if other_grouping_columns is None:
+                        return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
+                    else:
+                        other_grouping_columns = utils.ensure_list(other_grouping_columns)
+                        return data.groupby(
+                            [pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_columns]
+                        )
+
             raise ValueError(f"time_dim=`{time_dim}` not found in data")
+    else:
+        data_types_str = ", ".join(
+            str(i)
+            for i in [
+                xr.Dataset,
+                xr.DataArray,
+                pd.DataFrame,
+                pd.Series,
+            ]
+        )
+        raise TypeError(f"Data is of type {type(data)} but must be one of type: {data_types_str}")
 
 
 def resample_time(
@@ -1047,311 +1075,74 @@ def resample_time(
 #         raise ValueError(f"`resample_method` = '{resample_method}' is not a valid option")
 
 
-# def resample_time(
-#     data,
-#     freq="D",
-#     resample_method="sum",
-#     day_start_hour: float = 0,
-#     timezone_name: str = None,
-#     return_local_time: bool = False,
-#     set_time_to_midnight: bool = False,
-#     data_timestep_freq: float = 6,
-#     time_dim: str = "time",
-#     keep_attrs=True,
-#     **kwargs,
-# ):
+# def freq_to_timedelta64(freq):
 #     """
-#     Resample data in time, taking account of the timezone. The data can be timezone-naive (assumed to be UTC),
-#     or have a timezone set.
+#     Transforms pd.resample method freq to timedelta64 in ns
 
 #     Args:
-#         data: Data to resample
-#         freq: Resample time frequency based on pd/xr resample method, options ('D', 'W', ...).
-#         resample_method: Resample method ('mean', 'sum', 'max' or 'min').
-#         day_start_hour: The hour of the day that is used as the start of the day (so 1 complete day is from
-#         `day_start_hour` to `day_start_hour` + 24h).
-#         timezone_name: Name of the timezone, understood by `zoneinfo`
-#         return_local_time: Return the data with the local times instead of the resample times, where the
-#         resample times are taken as the nearest multiple of the `data_timestep_freq` for a given UTC
-#         offset offset (i.e. for 6h timesteps and timezone UTC-5, the data are resampled using multiples of 6h,
-#         where a UTC timestamp of 12:00 becomes 06:00). Resample times may be different from local time by up
-#         to 3h for 6h timesteps (in general, different by `n/2`h for `n`h timesteps).
-#         set_time_to_midnight: If `True`, reset the time part of the timestamps to midnight (00:00:00) on the same day.
-#         If `False`, do not modify the time part of the timestamps.
-#         data_timestep_freq: Data frequency in hours. Only used if < 24. Required if `return_local_time==True`.
-#         time_dim: Name of the time dimension/index/column in `data` that will be modified.
-#         keep_attrs (bool, optional): In case of xr keep attributes, defaults to True.
-
+#         freq (str): Resample freq (s, m, H, D, Y) or a multiple of them (for example "4D")
 #     Returns:
-#         Data resampled in time
-#     """
-#     check_wf_standard(data)
+#         (np.timedelta64) A timedelta64 in ns
 
-#     if timezone_name is None:
-#         # Assume timezone of data is UTC, so both the resample offset and the UTC offset are zero
-#         utc_resample_offset = 0
-#         utc_offset_hours = 0
+#     example 1 : Day
+#     >>> freq_to_timedelta64("D")
+#     numpy.timedelta64(86400000000000,'ns')
+
+#     example 2 : iHour
+#     >>> freq_to_timedelta64("12H")
+#     numpy.timedelta64(43200000000000,'ns')
+
+#     example 3 : ihour
+#     >>> freq_to_timedelta64("6h")
+#     numpy.timedelta64(21600000000000,'ns')
+
+#     example 4 : Month
+#     >>> freq_to_timedelta64("M") is None
+#     True
+#     """
+#     step, resample_freq = split_freq(freq)
+
+#     if resample_freq is not None:
+#         if resample_freq == "M":
+#             logging.warning("M leads to ambiguous timedelta64. Unable to determine the timedelta64.")
+#         elif len(resample_freq) == 1 and 0 < len(step):
+#             if resample_freq == "H":
+#                 resample_freq = resample_freq.lower()
+#             return np.timedelta64(int(step), resample_freq).astype("timedelta64[ns]")
+#         elif len(resample_freq) == 1 and len(step) == 0:
+#             if resample_freq == "H":
+#                 resample_freq = resample_freq.lower()
+#             return np.timedelta64(1, resample_freq).astype("timedelta64[ns]")
 #     else:
-#         if data_timestep_freq is None:
-#             raise ValueError("`data_timestep_freq` must be given when resampling in a non-UTC timezone.")
-
-#         times = get_time_from_data(data, time_dim=time_dim)
-
-#         # Get appropriate UTC offset to apply to the data
-#         utc_offset_hours = utc_offset_in_hours(times, timezone_name)
-
-#         if data_timestep_freq < 24:
-#             utc_resample_offset = -1 * wfutils.nearest_multiple(utc_offset_hours, base=data_timestep_freq)
-#         else:
-#             # If `data_timestep_freq more than 24h, the resample offset should be zero, as resampling
-#             # ignores the hours
-#             utc_resample_offset = 0.0
-
-#     # The UTC offset in hours to apply to the data, accounting for both the timezone and the start hour of the day
-#     resample_offset = dt.timedelta(hours=utc_resample_offset + day_start_hour)
-
-#     if isinstance(data, (xr.DataArray, xr.Dataset)):
-
-#         # recast `offset` to an `int` since xarray expects an `int` dtype for the `base` argument.
-#         # This could be removed with a future release of xarray, as long as the `base` argument is replaced by
-#         # the same `offset` argument as pandas resample
-#         resample_offset = int(resample_offset.total_seconds() / 3600)
-
-#         resampled = _resample_time_xr(
-#             ds=data,
-#             freq=freq,
-#             resample_method=resample_method,
-#             base=resample_offset,
-#             loffset=dt.timedelta(hours=resample_offset),
-#             keep_attrs=keep_attrs,
-#             **kwargs,
-#         )
-#     elif isinstance(data, (pd.DataFrame, pd.Series)):
-#         resampled = _resample_time_pd(
-#             df=data, freq=freq, resample_method=resample_method, offset=resample_offset, **kwargs
-#         )
-
-#     if freq is not None:
-#         _, char = split_freq(freq)
-
-#         # For frequencies of 1 day or higher
-#         if char in ("H", "T", "min", "S", "L", "ms", "U", "us", "N"):
-
-#             # Never reset time values to midnight as this leads to non-unique indexes
-#             set_time_to_midnight = False
-
-#     # If local times are required, subtract the UTC offset from the timestamps
-#     if return_local_time:
-#         hours_to_subtract = -1 * utc_offset_hours
-#     else:
-#         hours_to_subtract = None
-
-#     return _set_time_in_data(
-#         data=resampled,
-#         time_dim=time_dim,
-#         set_time_to_midnight=set_time_to_midnight,
-#         hours_to_subtract=hours_to_subtract,
-#     )
-
-#     return resampled
+#         raise ValueError("Only s, m, h, H, D, Y are accepted as freq")
 
 
-# def _resample_time_xr(ds, freq="D", resample_method="sum", keep_attrs=True, base=None, **kwargs):
-#     """ Resample xr.DataArray/xr.Dataset in time """
-#     if freq is None:
-#         return ds
-#     elif freq == "all":
-#         if resample_method == "sum":
-#             return ds.sum(dim="time", keep_attrs=keep_attrs)
-#         elif resample_method == "mean":
-#             return ds.mean(dim="time", keep_attrs=keep_attrs)
-#         elif resample_method == "min":
-#             return ds.min(dim="time", keep_attrs=keep_attrs)
-#         elif resample_method == "max":
-#             return ds.max(dim="time", keep_attrs=keep_attrs)
-#         elif resample_method == "cumsum":
-#             return ds.cumsum(dim="time", keep_attrs=keep_attrs)
-#     else:
-#         ds_resampled = ds.resample(time=freq, base=base, **kwargs)
-#         if resample_method == "sum":
-#             return ds_resampled.sum(keep_attrs=keep_attrs)
-#         elif resample_method == "mean":
-#             return ds_resampled.mean(keep_attrs=keep_attrs)
-#         elif resample_method == "min":
-#             return ds_resampled.min(keep_attrs=keep_attrs)
-#         elif resample_method == "max":
-#             return ds_resampled.max(keep_attrs=keep_attrs)
-#         elif resample_method == "cumsum":
-#             grouped_ds = _groupby_freq_xr(ds=ds, freq=freq)
-#             ds_cumsum = grouped_ds.map(lambda x: x.cumsum(dim="time", skipna=True, keep_attrs=keep_attrs))
-#             return ds_cumsum.reindex(time=ds.indexes["time"])
-#             # Only valid for xr.DataArray
-#             # ds_cumsum = ds_resampled.map(lambda x: np.cumsum(x))
-#             # return ds_cumsum.assign_coords({'time': ds.indexes["time"]})
-
-
-# def _resample_time_pd(df, freq="D", resample_method="sum", offset=None, **kwargs):
-#     """ Resample pd.Series/pd.DataFrame for the standar weatherforce MultiIndex (['time', 'id']) format """
-
-#     if freq is not None:
-#         if freq == "all":
-#             grouped_df = df.groupby(level=["id"])
-#         else:
-#             grouped_df = df.groupby(
-#                 [pd.Grouper(level="time", freq=freq, offset=offset, **kwargs), pd.Grouper(level="id")]
-#             )
-
-#         if resample_method == "sum":
-#             resampled_df = grouped_df.sum()
-#         elif resample_method == "mean":
-#             resampled_df = grouped_df.mean()
-#         elif resample_method == "min":
-#             resampled_df = grouped_df.min()
-#         elif resample_method == "max":
-#             resampled_df = grouped_df.max()
-#         elif resample_method == "cumsum":
-#             resampled_df = grouped_df.cumsum()
-#         return resampled_df
-#     else:
-#         return df
-
-
-# def groupby_freq(data, freq, **kwargs):
+# def split_freq(freq):
 #     """
-#     Groupby pandas freq
+#     Splits the resample freq into the step size and the time freq
 
-#     Args:
-#         data (xr.DataArray, xr.Dataset, pd.Series, pd.DataFrame): Data to groupby
-#         freq (str): Groupby time frequency based on pd/xr resample method
-#         options ('D', 'W', ...).
-#     Returns:
-#         (xr.DataArrayGroupBy, xr.DatasetGroupBy, pd.SeriesGroupBy, pd.DataFrameGroupBy): Data grouped in time.
+#     example 1 : Day
+#     >>> split_freq("D")
+#     ('', 'D')
+
+#     example 2 : iHour
+#     >>> split_freq("6H")
+#     ('6', 'H')
+
+#     example 3 : iMonthStart
+#     >>> split_freq("5MS")
+#     ('5', 'M')
+
+#     example 4 : Other
+#     >>> split_freq("BS")
+#     ('', None)
 #     """
-#     check_wf_standard(data)
-#     if isinstance(data, (xr.DataArray, xr.Dataset)):
-#         return _groupby_freq_xr(ds=data, freq=freq, **kwargs)
-#     elif isinstance(data, (pd.DataFrame, pd.Series)):
-#         return data.groupby([pd.Grouper(level="time", freq=freq), pd.Grouper(level="id")])
-
-
-# def _groupby_freq_xr(ds, freq, **kwargs):
-#     """
-#     Returns a groupby object for the given freq for a xr.Dataset/xr.DataArray
-
-#     Example 1:  Groupby month
-#         >>> ds = xr.Dataset({"tp": (("lat", "lon", "time"),
-#         ...                         np.ones((11, 11, 365)), {"name": "test_dataset"})},
-#         ...                 coords={'lat': np.arange(-5, 5 + 1),
-#         ...                         'lon': np.arange(-5, 5 + 1),
-#         ...                         "time": pd.date_range("2019-01-01", periods=365)},
-#         ...                 attrs={"name": "test_dataset"})
-#         >>> _groupby_freq_xr(ds, "M")
-#         DatasetGroupBy, grouped over 'time'
-#         12 groups with labels 2019-01-31, ..., 2019-12-31.
-
-#     Example 2: Groupby year
-#         >>> ds = xr.Dataset({"tp": (("lat", "lon", "time"),
-#         ...                         np.ones((11, 11, 365)), {"name": "test_dataset"})},
-#         ...                 coords={'lat': np.arange(-5, 5 + 1),
-#         ...                         'lon': np.arange(-5, 5 + 1),
-#         ...                         "time": pd.date_range("2019-01-01", periods=365)},
-#         ...                 attrs={"name": "test_dataset"})
-#         >>> _groupby_freq_xr(ds, "Y")
-#         DatasetGroupBy, grouped over 'time'
-#         1 groups with labels 2019-12-31.
-
-#     Example 3: Groupby ndays
-#         >>> ds = xr.Dataset({"tp": (("lat", "lon", "time"),
-#         ...                         np.ones((11, 11, 365)), {"name": "test_dataset"})},
-#         ...                 coords={'lat': np.arange(-5, 5 + 1),
-#         ...                         'lon': np.arange(-5, 5 + 1),
-#         ...                         "time": pd.date_range("2019-01-01", periods=365)},
-#         ...                 attrs={"name": "test_dataset"})
-#         >>> _groupby_freq_xr(ds, "7D")
-#         DatasetGroupBy, grouped over 'time'
-#         53 groups with labels 2019-01-01, ..., 2019-12-31.
-#     """
-
-#     time_index = ds.indexes["time"]
-#     original_time = pd.DataFrame({"time": time_index}).set_index("time")
-#     grouped_time = original_time.groupby(pd.Grouper(level="time", freq=freq))  # .ngroup().reset_index()
-#     labels = []
-#     prev_item = 0
-#     for key, item in grouped_time.groups.items():
-#         labels += [key] * (item - prev_item)
-#         prev_item = item
-#     labels = xr.DataArray(labels, coords={"time": time_index}, dims="time", name="time")
-#     return ds.groupby(labels, **kwargs)
-
-
-# # def freq_to_timedelta64(freq):
-# #     """
-# #     Transforms pd.resample method freq to timedelta64 in ns
-
-# #     Args:
-# #         freq (str): Resample freq (s, m, H, D, Y) or a multiple of them (for example "4D")
-# #     Returns:
-# #         (np.timedelta64) A timedelta64 in ns
-
-# #     example 1 : Day
-# #     >>> freq_to_timedelta64("D")
-# #     numpy.timedelta64(86400000000000,'ns')
-
-# #     example 2 : iHour
-# #     >>> freq_to_timedelta64("12H")
-# #     numpy.timedelta64(43200000000000,'ns')
-
-# #     example 3 : ihour
-# #     >>> freq_to_timedelta64("6h")
-# #     numpy.timedelta64(21600000000000,'ns')
-
-# #     example 4 : Month
-# #     >>> freq_to_timedelta64("M") is None
-# #     True
-# #     """
-# #     step, resample_freq = split_freq(freq)
-
-# #     if resample_freq is not None:
-# #         if resample_freq == "M":
-# #             logging.warning("M leads to ambiguous timedelta64. Unable to determine the timedelta64.")
-# #         elif len(resample_freq) == 1 and 0 < len(step):
-# #             if resample_freq == "H":
-# #                 resample_freq = resample_freq.lower()
-# #             return np.timedelta64(int(step), resample_freq).astype("timedelta64[ns]")
-# #         elif len(resample_freq) == 1 and len(step) == 0:
-# #             if resample_freq == "H":
-# #                 resample_freq = resample_freq.lower()
-# #             return np.timedelta64(1, resample_freq).astype("timedelta64[ns]")
-# #     else:
-# #         raise ValueError("Only s, m, h, H, D, Y are accepted as freq")
-
-
-# # def split_freq(freq):
-# #     """
-# #     Splits the resample freq into the step size and the time freq
-
-# #     example 1 : Day
-# #     >>> split_freq("D")
-# #     ('', 'D')
-
-# #     example 2 : iHour
-# #     >>> split_freq("6H")
-# #     ('6', 'H')
-
-# #     example 3 : iMonthStart
-# #     >>> split_freq("5MS")
-# #     ('5', 'M')
-
-# #     example 4 : Other
-# #     >>> split_freq("BS")
-# #     ('', None)
-# #     """
-# #     step = ""
-# #     resample_freq = None
-# #     for char in freq:
-# #         if char.isdigit():
-# #             step += char
-# #         elif char in "smhHDMY":
-# #             resample_freq = char
-# #             break
-# #     return step, resample_freq
+#     step = ""
+#     resample_freq = None
+#     for char in freq:
+#         if char.isdigit():
+#             step += char
+#         elif char in "smhHDMY":
+#             resample_freq = char
+#             break
+#     return step, resample_freq
