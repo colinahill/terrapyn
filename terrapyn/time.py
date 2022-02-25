@@ -863,7 +863,7 @@ def groupby_freq(
         >>> groupby_freq(ds, freq="M")
         DatasetResample, grouped over '__resample_dim__'
         4 groups with labels 2022-01-31, ..., 2022-04-30.
-        >>> groupby_freq(ds['var'].to_dataframe(), freq="M").sum()
+        >>> groupby_freq(ds['var'].to_dataframe(), freq="M").sum()  # doctest: +NORMALIZE_WHITESPACE
                              var
         time       lat lon
         2022-01-31 1   2    30.0

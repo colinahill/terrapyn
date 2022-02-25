@@ -575,3 +575,7 @@ class TestResampleTime(unittest.TestCase):
     def test_dataset_min(self):
         result = tp.time.resample_time(self.ds_hourly, resample_method="min")["var"].values.flatten()
         np.testing.assert_array_equal(result, np.array([0, 24, 48, 72, 96]))
+
+    def test_method_not_implemented(self):
+        with self.assertRaises(ValueError):
+            tp.time.resample_time(self.ds_hourly, resample_method="foobar")
