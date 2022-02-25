@@ -13,12 +13,12 @@ from . import utils
 # import dateutil
 
 
-def datetime64_to_datetime(dt64=np.datetime64) -> dt.datetime:
+def datetime64_to_datetime(datetime64: np.datetime64 = None) -> dt.datetime:
     """Convert numpy.datetime64 to dt.datetime"""
-    return np.datetime64(dt64, "us").astype(dt.datetime)
+    return np.datetime64(datetime64, "us").astype(dt.datetime)
 
 
-def datetime_to_datetime64(time=dt.datetime) -> np.datetime64:
+def datetime_to_datetime64(time: dt.datetime = None) -> np.datetime64:
     """Convert dt.datetime to numpy.datetime64"""
     return np.datetime64(time)
 
@@ -200,7 +200,7 @@ def groupby_time(
     elif grouping == "pentad":
         time_groups = datetime_to_pentad_number(times)
     else:
-        raise ValueError("`grouping` must be one of 'week', 'month', 'dayofyear', 'dekad', 'pentad', 'year'")
+        raise ValueError("`grouping` must be one of 'dayofyear', 'week', 'month', 'year', 'pentad', 'dekad'")
 
     if isinstance(time_groups, pd.Series):
         time_groups = time_groups.values
@@ -699,7 +699,7 @@ def _datetimeindex_to_local_time_tz_naive(
 
 
 def utc_offset_in_hours(
-    times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.DatetimeIndex] = None,
+    times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.DatetimeIndex, pd.Timestamp] = None,
     timezone_name: str = None,
     return_single_value: bool = True,
 ) -> T.Union[float, T.List[float]]:
@@ -804,6 +804,139 @@ def data_to_local_time(
             return times
         else:
             return utils.set_dim_values_in_data(data=data, values=times, dim=time_dim)
+
+
+def _resample_pandas_multiindex(
+    data: T.Union[pd.DataFrame, pd.Series] = None,
+    time_dim: str = "time",
+    freq: str = "D",
+    offset: T.Union[int, float] = None,
+    closed: str = "left",
+) -> T.Union[pd.DataFrame, pd.Series]:
+    """
+        Resample a pd.Dataframe/Series with a pd.Multiindex, where we do not reduce over other index levels,
+        only `time_dim`.
+
+        Args:
+            data: Data to resample in time
+            time_dim: Name of the time dimension/index/column in `data` that will be used to determine the grouping.
+            freq: Resample frequency. Follows Pandas notation here
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects
+
+    TODO        offset: Offset from base resampling
+            closed:
+
+        Returns:
+            Groupby object with data grouped by the given frequency.
+    """
+    time_dim_level = data.index.names.index(time_dim)
+    other_levels = np.delete(data.index.names, time_dim_level)
+    grouped = data.groupby([pd.Grouper(level=time_dim, freq=freq, offset=offset, closed=closed), *other_levels])
+    return grouped
+
+
+def groupby_freq(
+    data,
+    time_dim: str = "time",
+    freq: str = "D",
+    closed: str = "left",
+    day_start_hour: int = 0,
+    other_grouping_columns: list = None,
+):
+    """
+    Resample data in time.
+
+    Args:
+        data: Data to resample in time
+        time_dim: Name of the time dimension/index/column in `data` that will be used to determine the grouping.
+        freq: Resample frequency. Follows Pandas notation here
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects
+        day_start_hour: The hour that is used as the start of the day (so 1 complete day is from
+        `day_start_hour` to `day_start_hour` + 24h). Defaults to 0h.
+
+    Returns:
+        Groupby object with data grouped by the given frequency.
+    """
+    # The offset in hours to apply to the data to account for the day start hour
+    offset = dt.timedelta(hours=day_start_hour)
+
+    if isinstance(data, (xr.DataArray, xr.Dataset)):
+
+        return data.resample({time_dim: freq}, base=day_start_hour, loffset=offset, closed=closed)
+
+    elif isinstance(data, (pd.Series, pd.DataFrame)):
+
+        is_dim_in_index = utils._dim_in_pandas_index(data.index, time_dim)
+
+        if is_dim_in_index:
+            is_multiindex = utils._pandas_check_multiindex_type(data.index)
+
+            if is_multiindex:
+                return _resample_pandas_multiindex(
+                    data=data, time_dim=time_dim, freq=freq, offset=offset, closed=closed
+                )
+            else:
+                return data.groupby(pd.Grouper(level=time_dim, freq=freq, offset=offset, closed=closed))
+
+        elif isinstance(data, pd.DataFrame):
+            if time_dim in data.columns:
+
+                if other_grouping_columns is not None:
+                    other_grouping_columns = utils.ensure_list(other_grouping_columns)
+
+                    return data.groupby(
+                        [pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_columns]
+                    )
+                else:
+                    return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
+
+        else:
+            raise ValueError(f"time_dim=`{time_dim}` not found in data")
+
+
+def resample_time(
+    data: T.Union[pd.DataFrame, pd.Series] = None,
+    time_dim: str = "time",
+    freq: str = "D",
+    closed: str = "left",
+    resample_method: str = "sum",
+    day_start_hour: int = 0,
+    other_grouping_columns: list = None,
+):
+    """
+    Resample data in time.
+
+    Args:
+        data: Data to resample in time
+        time_dim: Name of the time dimension/index/column in `data` that will be used to determine the aggregation.
+        freq: Resample frequency. Follows Pandas notation here
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects
+        resample_method: How to reduce/aggregate the data in each resampled group, one of 'mean', 'sum', 'max', 'min'.
+        day_start_hour: The hour that is used as the start of the day (so 1 complete day is from
+        `day_start_hour` to `day_start_hour` + 24h). Defaults to 0h.
+
+    Returns:
+        Data resampled in time
+    """
+    grouped = groupby_freq(
+        data,
+        time_dim=time_dim,
+        freq=freq,
+        closed=closed,
+        day_start_hour=day_start_hour,
+        other_grouping_columns=other_grouping_columns,
+    )
+
+    if resample_method == "sum":
+        return grouped.sum()
+    elif resample_method == "mean":
+        return grouped.mean()
+    elif resample_method == "min":
+        return grouped.min()
+    elif resample_method == "max":
+        return grouped.max()
+    else:
+        raise ValueError(f"resample_method=`{resample_method}` not implemented")
 
 
 ################################################

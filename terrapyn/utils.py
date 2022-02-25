@@ -75,6 +75,58 @@ def set_dim_values_in_data(
     return data
 
 
+def get_dim_values_from_data(
+    data: T.Union[
+        xr.Dataset,
+        xr.DataArray,
+        pd.DataFrame,
+        pd.Series,
+        pd.MultiIndex,
+    ] = None,
+    dim: str = None,
+) -> np.ndarray:
+    """
+    Retrieve the values of a dimension/variable/column/index in xarray or pandas data structures.
+    If values are a pd.Index or pd.Series data type, these types are returned, otherwise a np.ndarray is returned.
+
+    Args:
+        data: Input data
+        dim: Name of dimension/variable/column/index, the values of which will be returned
+
+    Returns:
+        Values for the dimension/variable/column/index `dim`
+    """
+    # Validate `dim` string
+    if not isinstance(dim, str) or len(dim) == 0:
+        raise ValueError("`dim` must be a string with length > 0")
+
+    if isinstance(data, (pd.Series, pd.DataFrame)):
+        # Check if `dim` is in the index
+        if dim in data.index.names:
+            return data.index.get_level_values(dim).values
+        else:
+            if isinstance(data, pd.Series):
+                return data.values
+            elif dim in data.columns:
+                return data[dim].values
+            else:
+                raise ValueError(f"`dim` of '{dim} not found in data")
+    elif isinstance(data, (xr.Dataset, xr.DataArray)):
+        if dim in data.variables:
+            return data.variables[dim].values
+        else:
+            raise ValueError(f"`dim` of '{dim} not found in data")
+    elif isinstance(data, pd.MultiIndex):
+        # Check if `dim` is the index
+        if dim in data.names:
+            return data.get_level_values(dim).values
+        else:
+            raise ValueError(f"`dim` of {dim} not found in pd.Multindex")
+    else:
+        data_types_str = ", ".join(str(i) for i in [xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, pd.Multindex])
+        raise TypeError(f"Data is of type {type(data)} but must be one of type: {data_types_str}")
+
+
 def pandas_to_geopandas(
     df: pd.DataFrame, lat_col: str = "lat", lon_col: str = "lon", crs=None, *args, **kwargs
 ) -> gpd.GeoDataFrame:
@@ -94,3 +146,30 @@ def pandas_to_geopandas(
     gdf = gpd.GeoDataFrame(df, *args, **kwargs)
     gdf["geometry"] = gpd.points_from_xy(gdf[lon_col], gdf[lat_col], crs=crs)
     return gdf
+
+
+def _pandas_check_multiindex_type(index):
+    """Checks type of index and returns True if pd.Multiindex"""
+    return isinstance(index, pd.MultiIndex)
+
+
+def _dim_in_pandas_index(index, dim):
+    """Check if dimension `dim` is in a Pandas index (of any type)"""
+    is_multiindex = _pandas_check_multiindex_type(index)
+
+    if is_multiindex:
+        if index.names is not None:
+            return dim in index.names
+    else:
+        if index.name is not None:
+            return dim in index.name
+
+
+def ensure_list(a: T.Any = None) -> T.List[T.Any]:
+    """Ensure data `a` is a list and cast if required"""
+    if isinstance(a, list):
+        return a
+    elif isinstance(a, (str, int, float)):
+        return [a]
+    else:
+        return list(a)
