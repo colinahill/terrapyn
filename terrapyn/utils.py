@@ -173,3 +173,16 @@ def ensure_list(a: T.Any = None) -> T.List[T.Any]:
         return [a]
     else:
         return list(a)
+
+
+def _call_resample_method(obj, method, **kwargs):
+    if method == "sum":
+        return obj.sum(**kwargs)
+    elif method == "mean":
+        return obj.mean(**kwargs)
+    elif method == "min":
+        return obj.min(**kwargs)
+    elif method == "max":
+        return obj.max(**kwargs)
+    else:
+        raise ValueError(f"method=`{method}` not implemented")

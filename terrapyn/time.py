@@ -8,7 +8,7 @@ import xarray as xr
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
 
-from . import utils
+import terrapyn as tp
 
 # import dateutil
 
@@ -760,7 +760,7 @@ def _set_time_in_data(
             # Reinitialize the time component of the datetime to midnight i.e. 00:00:00, ignoring `hours_to_subtract`
             new_times = get_time_from_data(data, time_dim=time_dim).normalize()
 
-    return utils.set_dim_values_in_data(data=data, values=new_times, dim=time_dim)
+    return tp.utils.set_dim_values_in_data(data=data, values=new_times, dim=time_dim)
 
 
 def data_to_local_time(
@@ -803,7 +803,7 @@ def data_to_local_time(
         if isinstance(data, (np.ndarray, list, dt.datetime, pd.DatetimeIndex)):
             return times
         else:
-            return utils.set_dim_values_in_data(data=data, values=times, dim=time_dim)
+            return tp.utils.set_dim_values_in_data(data=data, values=times, dim=time_dim)
 
 
 def _resample_pandas_multiindex(
@@ -884,10 +884,10 @@ def groupby_freq(
 
     elif isinstance(data, (pd.Series, pd.DataFrame)):
 
-        is_dim_in_index = utils._dim_in_pandas_index(data.index, time_dim)
+        is_dim_in_index = tp.utils._dim_in_pandas_index(data.index, time_dim)
 
         if is_dim_in_index:
-            is_multiindex = utils._pandas_check_multiindex_type(data.index)
+            is_multiindex = tp.utils._pandas_check_multiindex_type(data.index)
 
             if is_multiindex:
                 return _resample_pandas_multiindex(
@@ -903,7 +903,7 @@ def groupby_freq(
                     if other_grouping_columns is None:
                         return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
                     else:
-                        other_grouping_columns = utils.ensure_list(other_grouping_columns)
+                        other_grouping_columns = tp.utils.ensure_list(other_grouping_columns)
                         return data.groupby(
                             [pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_columns]
                         )
@@ -955,21 +955,43 @@ def resample_time(
         other_grouping_columns=other_grouping_columns,
     )
 
-    if resample_method == "sum":
-        return grouped.sum()
-    elif resample_method == "mean":
-        return grouped.mean()
-    elif resample_method == "min":
-        return grouped.min()
-    elif resample_method == "max":
-        return grouped.max()
+    return tp.utils._call_resample_method(grouped, resample_method)
+
+
+def rolling(
+    data: T.Union[pd.Series, xr.DataArray] = None,
+    n_periods: int = 3,
+    min_periods: int = None,
+    method: str = "sum",
+    time_dim: str = "time",
+) -> T.Union[pd.Series, xr.DataArray]:
+    """
+    Calculate a rolling `method` over a window with `n_periods`, with minimum of `min_periods` in the window.
+    Works for both pd.DataFrame/Series and xr.DataArray/xr.Dataset
+
+    Args:
+        data: pd.Dataframe/Series or xr.Dataset/DataArray.
+        n_periods: Number of periods to include in the sliding window, where the given `method` is applied to values
+        from `time - n_periods` to `time`. i.e. `n_periods = 3` with `method='sum'` means the data at a given time will
+        be summed with the previous 2 time steps
+
+    """
+    if min_periods is None:
+        min_periods = n_periods
+
+    if isinstance(data, pd.Series):
+        rolling_data = data.rolling(n_periods, min_periods=n_periods)
+    elif isinstance(data, xr.DataArray):
+        rolling_data = data.rolling({time_dim: n_periods}, min_periods=n_periods)
     else:
-        raise ValueError(f"resample_method=`{resample_method}` not implemented")
+        raise TypeError("data must be of type pd.Series or xr.DataArray")
+
+    return tp.utils._call_resample_method(rolling_data, method, dim=time_dim)
 
 
 ################################################
 
-# # Dictionary to define the relative order of pandas time frequencies, where a lower value is higher frequency.
+# Dictionary to define the relative order of pandas time frequencies, where a lower value is higher frequency.
 # FREQUENCY_DICT = {
 #     "N": 0,
 #     "U": 1,

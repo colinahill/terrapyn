@@ -1,14 +1,14 @@
 # terrapyn
 
 [![PyPI version](https://badge.fury.io/py/terrapyn.svg)](https://badge.fury.io/py/terrapyn)
-[![Coverage](.github/coverage.svg)](.github/coverage.svg)
+[Coverage](.github/coverage.svg)
 ![versions](https://img.shields.io/pypi/pyversions/terrapyn.svg)
 [![GitHub license](https://img.shields.io/pypi/l/terrapyn)](https://github.com/colinahill/terrapyn/blob/main/LICENSE.md)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Toolkit to manipulate Earth observations and models. Designed to work with `Pandas` and `Xarray` data structures homogeneously, implementing `Dask` optimizations.
 
-The name is pronounced the same as "terrapin", a type of fresh water [turtle](https://en.wikipedia.org/wiki/Terrapin)
+The name is pronounced the same as "terrapin", a type of [fresh water turtle](https://en.wikipedia.org/wiki/Terrapin)
 
 - Documentation: https://colinahill.github.io/terrapyn.
 - Free software: BSD-3-Clause
