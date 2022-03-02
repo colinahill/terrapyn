@@ -68,3 +68,20 @@ class TestSetDimValuesInData(unittest.TestCase):
     def test_wrong_data_type(self):
         with self.assertRaises(TypeError):
             tp.utils.set_dim_values_in_data([1, 2, 3], [4, 5, 6])
+
+
+class TestRemoveListElements(unittest.TestCase):
+
+    input_list = ["item", 5, "foo", 3.14, True]
+
+    def test_remove_element(self):
+        result = tp.utils.remove_list_elements(self.input_list, ["item"])
+        self.assertEqual(result, [5, "foo", 3.14, True])
+
+    def test_missing_list(self):
+        with self.assertRaises(ValueError):
+            tp.utils.remove_list_elements(self.input_list, None)
+
+    def test_string(self):
+        result = tp.utils.remove_list_elements(self.input_list, "item")
+        self.assertEqual(result, [5, "foo", 3.14, True])
