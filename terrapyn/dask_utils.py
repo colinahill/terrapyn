@@ -1,8 +1,27 @@
 import typing as T
 
+import dask
 import xarray as xr
 
 import terrapyn as tp
+
+
+def create_cluster_and_client(n_workers: int = 4, threads_per_worker: int = 1, memory_limit: str = "1GB", **kwargs):
+    """Create a local cluster and initiate a client
+
+    Args:
+        n_workers: Number of workers to start.
+        threads_per_worker: Number of threads per each worker.
+        memory_limit: Memory limit per worker.
+
+    Returns:
+        Dask Client
+    """
+    client = dask.distributed.Client(
+        n_workers=n_workers, threads_per_worker=threads_per_worker, memory_limit=memory_limit, **kwargs
+    )
+    print(f"Client dashboard: {client.dashboard_link}")
+    return client
 
 
 def chunk_xarray(
@@ -50,3 +69,12 @@ def chunk_xarray(
         chunks.update({i: "auto" for i in coords})
 
     return data.chunk(chunks)
+
+
+def uses_dask(data: T.Union[xr.Dataset, xr.DataArray] = None) -> T.Union[xr.Dataset, xr.DataArray]:
+    """Check if an xarray data structure uses Dask"""
+    if isinstance(data, xr.DataArray) and isinstance(data.data, dask.array.Array):
+        return True
+    if isinstance(data, xr.Dataset) and any(isinstance(var.data, dask.array.Array) for var in data.variables.values()):
+        return True
+    return False

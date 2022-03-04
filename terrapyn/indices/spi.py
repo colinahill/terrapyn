@@ -1,13 +1,12 @@
 """
-. This number depends on the
-        timescale of interest, where 3 month SPI is used for a short-term or seasonal drought index,
-        12 month SPI for an intermediate-term drought index, and 48 month SPI for a long-term drought index.
+SPI:
+- Number of rolling months depends on the timescale of interest, where 3 month SPI
+ is used for a short-term or seasonal drought index, 12 month SPI for an
+ intermediate-term drought index, and 48 month SPI for a long-term drought index.
 
-
-            TODO:
-        an addition parameter should be the output timestep, as e.g. input data could be daily, but we
-        want data with monthly timesteps. A resampling operation should be carried out PRIOR to the rolling operation
-
+TODO:
+- An addition parameter should be the output timestep, as e.g. input data could be daily, but we
+want data with monthly timesteps. A resampling operation should be carried out PRIOR to the rolling operation.
 """
 import typing as T
 
@@ -16,7 +15,7 @@ import pandas as pd
 import xarray as xr
 from scipy import stats as st
 
-# import terrapyn as tp
+import terrapyn as tp
 
 # TODO - this could be implemented in fit Gamma PDF if there is also the option to set a min_threshold
 # just above zero, instead of equal to zero, e.g.
@@ -200,13 +199,14 @@ def fit_gamma_pdf(
     # Set negative values to zero
     data = data.clip(0, None)
 
-    # Re-chunk along time_dim if using Dask
-    # TODO use dask rechunker function to create good sized chunks
-
     if isinstance(data, pd.Series):
         return _fit_gamma_pdf(data)
 
     elif isinstance(data, xr.DataArray):
+        if tp.dask_utils.uses_dask(data):
+            # Re-chunk along time_dim if using Dask
+            data = tp.dask_utils.chunk_xarray(data, coords_no_chunking=time_dim)
+
         return _fit_gamma_pdf_dataarray(da=data, time_dim=time_dim)
 
     else:
@@ -237,12 +237,14 @@ def calc_gamma_cdf(
     Returns:
         xr.DataArray for the Gamma function CDF for the given values, shape and scale parameters.
     """
-    # Re-chunk along time_dim if using Dask
-    # TODO use dask rechunker function to create good sized chunks
-
     if isinstance(data, pd.Series):
         return _calc_gamma_cdf(data, shape=gamma_parameters[0], scale=gamma_parameters[1])
+
     elif isinstance(data, xr.DataArray):
+        if tp.dask_utils.uses_dask(data):
+            # Re-chunk along time_dim if using Dask
+            data = tp.dask_utils.chunk_xarray(data, coords_no_chunking=time_dim)
+
         return _calc_gamma_cdf_dataarray(
             data, gamma_parameters, time_dim=time_dim, shape_dim=shape_dim, scale_dim=scale_dim
         )
@@ -283,13 +285,14 @@ def cdf_to_normal_pdf(
     Returns:
         The computed values of the inverse normal distribution for the given CDF
     """
-    # Re-chunk along time_dim if using Dask
-    # TODO use dask rechunker function to create good sized chunks
-
     if isinstance(data, pd.Series):
         normal_pdf = _cdf_to_normal_pdf(data)
         return pd.Series(normal_pdf, index=data.index)
+
     elif isinstance(data, xr.DataArray):
+        if tp.dask_utils.uses_dask(data):
+            # Re-chunk along time_dim if using Dask
+            data = tp.dask_utils.chunk_xarray(data, coords_no_chunking=time_dim)
         return _cdf_to_normal_pdf_dataarray(data, time_dim=time_dim)
     else:
         raise TypeError("data must be of type pd.Series or xr.DataArray")
