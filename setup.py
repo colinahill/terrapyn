@@ -24,7 +24,6 @@ install_requires = [
 ]
 
 dev_install_requires = [
-    "mkdocs-material",
     "pytest",
     "pytest-cov",
     "flake8",
@@ -36,6 +35,12 @@ dev_install_requires = [
     "isort",
     "pre-commit",
     "freezegun",
+    "mkdocs-material",
+    "mkdocs-gen-files",
+    "mkdocstrings-python",
+    "mkdocs-literate-nav",
+    "mkdocs-section-index",
+    "mkdocs-include-markdown-plugin",
     "coverage-badge",
 ]
 
