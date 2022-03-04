@@ -12,8 +12,8 @@ import typing as T
 
 import numpy as np
 import pandas as pd
+import scipy.stats as st
 import xarray as xr
-from scipy import stats as st
 
 import terrapyn as tp
 
@@ -51,6 +51,7 @@ def _fit_gamma_pdf(array: np.ndarray = None) -> np.ndarray:
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gamma.html.
 
     Values < 0 are automatically clipped to 0, and only finite values are included in the fit.
+    If only non-finite values are given, a parameter array of NaN is returned.
 
     Args:
         array: Array of values to fit
@@ -59,11 +60,11 @@ def _fit_gamma_pdf(array: np.ndarray = None) -> np.ndarray:
         Array of [shape, scale] parameters for fitted Gamma PDF
     """
     # Include only finite values
-    finite_values_indices = np.isfinite(array)
+    finite_values_mask = np.isfinite(array)
 
-    if np.any(finite_values_indices):
+    if np.any(finite_values_mask):
 
-        finite_values = array[finite_values_indices]
+        finite_values = array[finite_values_mask]
 
         # Fit Gamma PDF to data
         shape, _, scale = st.gamma.fit(finite_values)
@@ -170,7 +171,6 @@ def _calc_gamma_cdf_dataarray(
         vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],
-        dask_gufunc_kwargs=dict(output_sizes={time_dim: 1}),
     )
 
 
@@ -196,21 +196,21 @@ def fit_gamma_pdf(
     Returns:
         Shape and scale parameters for the fitted Gamma PDF
     """
+    if not isinstance(data, (pd.Series, xr.DataArray)):
+        raise TypeError("data must be of type pd.Series or xr.DataArray")
+
     # Set negative values to zero
     data = data.clip(0, None)
 
     if isinstance(data, pd.Series):
         return _fit_gamma_pdf(data)
 
-    elif isinstance(data, xr.DataArray):
+    else:
         if tp.dask_utils.uses_dask(data):
             # Re-chunk along time_dim if using Dask
             data = tp.dask_utils.chunk_xarray(data, coords_no_chunking=time_dim)
 
         return _fit_gamma_pdf_dataarray(da=data, time_dim=time_dim)
-
-    else:
-        raise TypeError("data must be of type pd.Series or xr.DataArray")
 
 
 def calc_gamma_cdf(
@@ -237,10 +237,13 @@ def calc_gamma_cdf(
     Returns:
         xr.DataArray for the Gamma function CDF for the given values, shape and scale parameters.
     """
+    if not isinstance(data, (pd.Series, xr.DataArray)):
+        raise TypeError("data must be of type pd.Series or xr.DataArray")
+
     if isinstance(data, pd.Series):
         return _calc_gamma_cdf(data, shape=gamma_parameters[0], scale=gamma_parameters[1])
 
-    elif isinstance(data, xr.DataArray):
+    else:
         if tp.dask_utils.uses_dask(data):
             # Re-chunk along time_dim if using Dask
             data = tp.dask_utils.chunk_xarray(data, coords_no_chunking=time_dim)
@@ -248,8 +251,6 @@ def calc_gamma_cdf(
         return _calc_gamma_cdf_dataarray(
             data, gamma_parameters, time_dim=time_dim, shape_dim=shape_dim, scale_dim=scale_dim
         )
-    else:
-        raise TypeError("data must be of type pd.Series or xr.DataArray")
 
 
 def _cdf_to_normal_pdf(cdf: np.ndarray = None) -> np.ndarray:
@@ -267,7 +268,6 @@ def _cdf_to_normal_pdf_dataarray(da: xr.DataArray = None, time_dim: str = "time"
         vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],
-        dask_gufunc_kwargs=dict(output_sizes={time_dim: 1}),
     )
 
 
@@ -285,14 +285,15 @@ def cdf_to_normal_pdf(
     Returns:
         The computed values of the inverse normal distribution for the given CDF
     """
+    if not isinstance(data, (pd.Series, xr.DataArray)):
+        raise TypeError("data must be of type pd.Series or xr.DataArray")
+
     if isinstance(data, pd.Series):
         normal_pdf = _cdf_to_normal_pdf(data)
         return pd.Series(normal_pdf, index=data.index)
 
-    elif isinstance(data, xr.DataArray):
+    else:
         if tp.dask_utils.uses_dask(data):
             # Re-chunk along time_dim if using Dask
             data = tp.dask_utils.chunk_xarray(data, coords_no_chunking=time_dim)
         return _cdf_to_normal_pdf_dataarray(data, time_dim=time_dim)
-    else:
-        raise TypeError("data must be of type pd.Series or xr.DataArray")
