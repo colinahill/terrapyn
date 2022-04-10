@@ -2,7 +2,7 @@ import os
 
 import setuptools
 
-version = os.getenv("VERSION", "0.0.1")
+version = os.getenv("VERSION", "0.0.2")
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -16,15 +16,14 @@ install_requires = [
     "scipy",
     "netcdf4",
     "dask",
-    # "cfgrib",
-    # "eccodes"
-    # "geopandas",
+    "cfgrib",
+    "eccodes",
+    "geopandas",
     # "shapely",
     # "xoa"
 ]
 
 dev_install_requires = [
-    "mkdocs-material",
     "pytest",
     "pytest-cov",
     "flake8",
@@ -36,6 +35,12 @@ dev_install_requires = [
     "isort",
     "pre-commit",
     "freezegun",
+    "mkdocs-material",
+    "mkdocs-gen-files",
+    "mkdocstrings-python",
+    "mkdocs-literate-nav",
+    "mkdocs-section-index",
+    "mkdocs-include-markdown-plugin",
     "coverage-badge",
 ]
 
@@ -55,7 +60,6 @@ setuptools.setup(
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
