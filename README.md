@@ -1,7 +1,7 @@
 # terrapyn
 
 [![PyPI version](https://badge.fury.io/py/terrapyn.svg)](https://badge.fury.io/py/terrapyn)
-[Coverage](.github/coverage.svg)
+[![Coverage](.github/coverage.svg])(.github/coverage.svg)
 ![versions](https://img.shields.io/pypi/pyversions/terrapyn.svg)
 [![GitHub license](https://img.shields.io/pypi/l/terrapyn)](https://github.com/colinahill/terrapyn/blob/main/LICENSE.md)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
