@@ -22,7 +22,7 @@ values = np.array(
 # Original values
 da = xr.DataArray(
     values,
-    coords={"lat": [1, 2], "lon": [3, 4], "time": pd.date_range("1980-01-01", periods=360, freq="MS")},
+    coords={"lat": [1, 2], "lon": [3, 4], "time": pd.date_range("1950-01-01", periods=360, freq="MS")},
     name="tp",
 )
 series = da.isel(lon=0, lat=0).to_series()
@@ -30,8 +30,8 @@ series = da.isel(lon=0, lat=0).to_series()
 # Gamma Function - Fitted Probability Distribution Function Parameters
 ds_gamma_pdf = xr.Dataset(
     {
-        "shape": (["lat", "lon"], np.array([[2.454504, 1.9035197], [1.8584378, 1.87185]])),
-        "scale": (["lat", "lon"], np.array([[0.86844677, 1.0014211], [1.1162359, 0.99978834]])),
+        "shape": (["lat", "lon"], np.array([[2.096559, 2.17777], [1.834304, 1.898045]])),
+        "scale": (["lat", "lon"], np.array([[0.973479, 0.912459], [1.126458, 0.989294]])),
     },
     coords={"lat": [1, 2], "lon": [3, 4]},
 )
@@ -45,10 +45,10 @@ class TestFitGammaPdf(unittest.TestCase):
         result = tp.indices.spi.fit_gamma_pdf(da)
         self.assertEqual(list(result.data_vars), ["shape", "scale"])
         np.testing.assert_array_almost_equal(
-            result["shape"].values, np.array([[2.454504, 1.9035197], [1.8584378, 1.87185]])
+            result["shape"].values, np.array([[2.096559, 2.17777], [1.834304, 1.898045]])
         )
         np.testing.assert_array_almost_equal(
-            result["scale"].values, np.array([[0.86844677, 1.0014211], [1.1162359, 0.99978834]])
+            result["scale"].values, np.array([[0.973479, 0.912459], [1.126458, 0.989294]])
         )
 
     def test_invalid_data_type(self):
@@ -57,16 +57,16 @@ class TestFitGammaPdf(unittest.TestCase):
 
     def test_series(self):
         result = tp.indices.spi.fit_gamma_pdf(series)
-        np.testing.assert_array_almost_equal(result, np.array([2.45450392, 0.86844675]))
+        np.testing.assert_array_almost_equal(result, np.array([2.096559, 0.973479]))
 
     def test_dask_dataarray(self):
         result = tp.indices.spi.fit_gamma_pdf(da.chunk({"time": 10}))
         self.assertEqual(list(result.data_vars), ["shape", "scale"])
         np.testing.assert_array_almost_equal(
-            result["shape"].values, np.array([[2.454504, 1.9035197], [1.8584378, 1.87185]])
+            result["shape"].values, np.array([[2.096559, 2.17777], [1.834304, 1.898045]])
         )
         np.testing.assert_array_almost_equal(
-            result["scale"].values, np.array([[0.86844677, 1.0014211], [1.1162359, 0.99978834]])
+            result["scale"].values, np.array([[0.973479, 0.912459], [1.126458, 0.989294]])
         )
 
 
@@ -74,17 +74,17 @@ class TestCalcGammaCdf(unittest.TestCase):
     def test_dataset(self):
         result = tp.indices.spi.calc_gamma_cdf(da, ds_gamma_pdf)
         np.testing.assert_array_almost_equal(
-            result.isel(time=3).values, np.array([[0.95392674, 0.43195], [0.3511891, 0.50786465]])
+            result.isel(time=3).values, np.array([[0.95274, 0.393063], [0.355029, 0.504819]])
         )
 
     def test_series(self):
         result = tp.indices.spi.calc_gamma_cdf(series, array_gamma_pdf)
-        np.testing.assert_almost_equal(result.iloc[3], 0.9539267794776843)
+        np.testing.assert_almost_equal(result.iloc[3], 0.9527398308827437)
 
     def test_dask_dataset(self):
         result = tp.indices.spi.calc_gamma_cdf(da.chunk({"time": 10}), ds_gamma_pdf.chunk(1))
         np.testing.assert_array_almost_equal(
-            result.isel(time=3).values, np.array([[0.95392674, 0.43195], [0.3511891, 0.50786465]])
+            result.isel(time=3).values, np.array([[0.95274, 0.393063], [0.355029, 0.504819]])
         )
 
     def test_invalid_data_type(self):
@@ -95,26 +95,26 @@ class TestCalcGammaCdf(unittest.TestCase):
 class TestCdfToNormalPdf(unittest.TestCase):
     def test_dataset(self):
         da_gamma_cdf = tp.indices.spi.calc_gamma_cdf(da, ds_gamma_pdf)
-        result = tp.indices.spi.cdf_to_normal_pdf(da_gamma_cdf)
+        result = tp.indices.spi.cdf_to_normal_ppf(da_gamma_cdf)
         np.testing.assert_almost_equal(
-            result.isel(time=3).values, np.array([[1.6841819, -0.17141177], [-0.38211212, 0.01971504]])
+            result.isel(time=3).values, np.array([[1.6720202, -0.2713455], [-0.3717769, 0.0120806]])
         )
 
     def test_series(self):
         series_gamma_cdf = tp.indices.spi.calc_gamma_cdf(series, array_gamma_pdf)
-        result = tp.indices.spi.cdf_to_normal_pdf(series_gamma_cdf)
-        np.testing.assert_almost_equal(result.iloc[3], 1.684182309421188)
+        result = tp.indices.spi.cdf_to_normal_ppf(series_gamma_cdf)
+        np.testing.assert_almost_equal(result.iloc[3], 1.6720202033023708)
 
     def test_dask_dataset(self):
         da_gamma_cdf = tp.indices.spi.calc_gamma_cdf(da.chunk({"time": 10}), ds_gamma_pdf.chunk(1))
-        result = tp.indices.spi.cdf_to_normal_pdf(da_gamma_cdf)
+        result = tp.indices.spi.cdf_to_normal_ppf(da_gamma_cdf)
         np.testing.assert_almost_equal(
-            result.isel(time=3).values, np.array([[1.6841819, -0.17141177], [-0.38211212, 0.01971504]])
+            result.isel(time=3).values, np.array([[1.6720202, -0.2713455], [-0.3717769, 0.0120806]])
         )
 
     def test_invalid_data_type(self):
         with self.assertRaises(TypeError):
-            tp.indices.spi.cdf_to_normal_pdf([1, 2, 3])
+            tp.indices.spi.cdf_to_normal_ppf([1, 2, 3])
 
 
 class Test_FitGammaPdf(unittest.TestCase):

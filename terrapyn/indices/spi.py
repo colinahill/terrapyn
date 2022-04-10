@@ -1,8 +1,7 @@
 """
-SPI:
-- Number of rolling months depends on the timescale of interest, where 3 month SPI
- is used for a short-term or seasonal drought index, 12 month SPI for an
- intermediate-term drought index, and 48 month SPI for a long-term drought index.
+SPI: Number of rolling months depends on the timescale of interest, where 3 month SPI
+is used for a short-term or seasonal drought index, 12 month SPI for an
+intermediate-term drought index, and 48 month SPI for a long-term drought index.
 
 TODO:
 - An addition parameter should be the output timestep, as e.g. input data could be daily, but we
@@ -66,9 +65,16 @@ def _fit_gamma_pdf(array: np.ndarray = None) -> np.ndarray:
 
         finite_values = array[finite_values_mask]
 
-        # Fit Gamma PDF to data
-        shape, _, scale = st.gamma.fit(finite_values)
-        return np.array([shape, scale])
+        # # Fit Gamma PDF to data
+        # shape, _, scale = st.gamma.fit(finite_values)
+        # return np.array([shape, scale])
+
+        log_values = np.log(finite_values)
+        mean_values = np.mean(finite_values)
+        A = np.log(mean_values) - np.mean(log_values)
+        alpha = 1 / (4 * A) * (1 + np.sqrt(1 + 4 / 3 * A))
+        beta = mean_values / alpha
+        return np.array([alpha, beta])
 
     else:
         return np.array([np.nan, np.nan])
@@ -235,7 +241,7 @@ def calc_gamma_cdf(
         scale_dim: Name of the Gamma "scale" parameter in `gamma_parameters`. Only applies to xr.Dataset.
 
     Returns:
-        xr.DataArray for the Gamma function CDF for the given values, shape and scale parameters.
+        Parameters of the Gamma function CDF for the given values (shape and scale parameters).
     """
     if not isinstance(data, (pd.Series, xr.DataArray)):
         raise TypeError("data must be of type pd.Series or xr.DataArray")
@@ -253,15 +259,19 @@ def calc_gamma_cdf(
         )
 
 
-def _cdf_to_normal_pdf(cdf: np.ndarray = None) -> np.ndarray:
-    """Apply the inverse normal distribution to a CDF to yield a normal PDF with mean = 0 and std = 1"""
-    return st.norm.ppf(cdf, loc=0, scale=1)
+def _cdf_to_normal_ppf(cdf: np.ndarray = None) -> np.ndarray:
+    """Apply the inverse normal distribution to a CDF to yield a normal
+    Percent point function (PPF) with mean = 0 and std = 1
+    """
+    normal_ppf = st.norm.ppf(cdf, loc=0, scale=1)
+    normal_ppf[np.isinf(normal_ppf)] = np.nan
+    return normal_ppf
 
 
-def _cdf_to_normal_pdf_dataarray(da: xr.DataArray = None, time_dim: str = "time") -> xr.DataArray:
-    """Apply the inverse normal distribution to a CDF to yield a normal PDF with mean = 0 and std = 1"""
+def _cdf_to_normal_ppf_dataarray(da: xr.DataArray = None, time_dim: str = "time") -> xr.DataArray:
+    """Apply the inverse normal distribution to a CDF to yield a normal PPF with mean = 0 and std = 1"""
     return xr.apply_ufunc(
-        _cdf_to_normal_pdf,
+        _cdf_to_normal_ppf,
         da,
         input_core_dims=[[time_dim]],
         output_core_dims=[[time_dim]],
@@ -271,11 +281,11 @@ def _cdf_to_normal_pdf_dataarray(da: xr.DataArray = None, time_dim: str = "time"
     )
 
 
-def cdf_to_normal_pdf(
+def cdf_to_normal_ppf(
     data: T.Union[pd.Series, xr.DataArray] = None, time_dim: str = "time"
 ) -> T.Union[pd.Series, xr.DataArray]:
     """
-    Apply the inverse normal distribution to a CDF to yield a normal PDF with mean = 0 and std = 1
+    Apply the inverse normal distribution to a CDF to yield a normal PPF with mean = 0 and std = 1
 
     Args:
         data: pd.Series or xr.DataArray of values. xr.DataArray should have coordinates of latitude,
@@ -289,11 +299,81 @@ def cdf_to_normal_pdf(
         raise TypeError("data must be of type pd.Series or xr.DataArray")
 
     if isinstance(data, pd.Series):
-        normal_pdf = _cdf_to_normal_pdf(data)
+        normal_pdf = _cdf_to_normal_ppf(data)
         return pd.Series(normal_pdf, index=data.index)
 
     else:
         if tp.dask_utils.uses_dask(data):
             # Re-chunk along time_dim if using Dask
             data = tp.dask_utils.chunk_xarray(data, coords_no_chunking=time_dim)
-        return _cdf_to_normal_pdf_dataarray(data, time_dim=time_dim)
+        return _cdf_to_normal_ppf_dataarray(data, time_dim=time_dim)
+
+
+def calc_spi(
+    data: T.Union[pd.Series, xr.DataArray] = None,
+    n_months: int = 3,
+    gamma_parameters: T.Union[pd.Series, xr.DataArray] = None,
+    return_gamma_params: bool = False,
+    time_dim: str = "time",
+) -> T.Union[pd.Series, xr.DataArray]:
+    """Calculate SPI, where `n_months` is the timescale of interest: 3 month SPI is used for a
+    short-term or seasonal drought index, 12 month SPI for an intermediate-term drought index,
+    and 48 month SPI for a long-term drought index.
+
+    Groups of monthly data are modelled using a Gamma Distritibution, and the corresponding
+    CDF of model is transformed to a Normal PPF for each monthly value, yielding the SPI value.
+
+    Args:
+        data: Data, with values on a monthly timestep with datetimes as `time_dim` index
+        n_months: The number of months over which to calculate the rolling mean (the timescale of interest)
+        gamma_parameters: (Optional) The shape and scale parameters the define a Gamma distribution. If given,
+        these parameters are used instead of fitting the data. For `pd.Series` the index must be the month,
+        with values of a Tuple of (shape, scale).
+        return_gamma_params: If `True` then return fitted Gamma Parameters.
+        time_dim: Name of the time coordinate in `data`. Only applies to xr.DataArray.
+
+    Returns:
+        SPI values for each month
+    """
+    # Calculate rolling mean over `n_months` with minimum of `n_months` in the window
+    data_rolling = tp.time.rolling(data, n_periods=n_months, min_periods=n_months, method="mean", time_dim=time_dim)
+
+    # Group rolling data by month
+    data_rolling_grouped = tp.time.groupby_time(data_rolling, grouping="month")
+
+    # Use Gamma Parameters provided, otherwise fit the Gamma distribution
+    if gamma_parameters is None:
+
+        # Calculate Gamma distribution parameters for each monthly group
+        gamma_parameters = data_rolling_grouped.apply(tp.indices.spi.fit_gamma_pdf)
+
+    # For each month, calculate the Gamma CDF
+    if isinstance(data, pd.Series):
+
+        # Check length of gamma_parameters is equal to the number of months
+        # gamma_parameters is a list of tuples of (shape, scale)
+        # if len(gamma_parameters) != data_rolling_grouped.ngroups:
+        #     raise ValueError(f"`gamma_parameters` has length {len(gamma_parameters)}")
+
+        gamma_cdf_list = [
+            tp.indices.spi.calc_gamma_cdf(group, gamma_parameters.loc[label]) for label, group in data_rolling_grouped
+        ]
+
+        # For each month, transform the Gamma CDF to a Normal PPF, then sort the data by time
+        normal_ppf = pd.concat([tp.indices.spi.cdf_to_normal_ppf(item) for item in gamma_cdf_list]).sort_index()
+
+    else:
+        gamma_cdf_list = [
+            tp.indices.spi.calc_gamma_cdf(group, gamma_parameters.sel({"month": label}).drop("month"))
+            for label, group in data_rolling_grouped
+        ]
+
+        # For each month, transform the Gamma CDF to a Normal PPF, then sort the data by time
+        normal_ppf = xr.concat([tp.indices.spi.cdf_to_normal_ppf(item) for item in gamma_cdf_list], dim="time").sortby(
+            "time"
+        )
+
+    if return_gamma_params:
+        return normal_ppf, gamma_parameters
+    else:
+        return normal_ppf
