@@ -49,7 +49,7 @@ def _fit_gamma_pdf(array: np.ndarray = None) -> np.ndarray:
     where shape = alpha and scale = 1 / beta see
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gamma.html.
 
-    Values < 0 are automatically clipped to 0, and only finite values are included in the fit.
+    Values < 0 are automatically clipped to 0, and only finite values > 0 are included in the fit.
     If only non-finite values are given, a parameter array of NaN is returned.
 
     Args:
@@ -58,17 +58,18 @@ def _fit_gamma_pdf(array: np.ndarray = None) -> np.ndarray:
     Returns:
         Array of [shape, scale] parameters for fitted Gamma PDF
     """
-    # Include only finite values
-    finite_values_mask = np.isfinite(array)
+    # Include only finite values > 0
+    finite_values_mask = np.isfinite(array) & (array > 0)
 
     if np.any(finite_values_mask):
 
         finite_values = array[finite_values_mask]
 
-        # # Fit Gamma PDF to data
+        # # Fit Gamma PDF to data using scipy
         # shape, _, scale = st.gamma.fit(finite_values)
         # return np.array([shape, scale])
 
+        # Fit Gamma PDF using approximation - see Lloyd-Hughes and Saunders 2002, A drought climatology for Europe
         log_values = np.log(finite_values)
         mean_values = np.mean(finite_values)
         A = np.log(mean_values) - np.mean(log_values)
