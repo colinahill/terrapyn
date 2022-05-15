@@ -1,4 +1,3 @@
----
 # Project Information
 site_name: terrapyn
 site_author: Colin Hill
@@ -29,6 +28,19 @@ extra:
       link: https://github.com/colinahill
       name: colinahill on GitHub
 
+plugins:
+  - search
+  - gen-files:
+      scripts:
+      - docs/gen_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      watch:
+      - terrapyn/
+
 # Page tree
 nav:
   - Home: index.md
+  - Code Reference: reference/
