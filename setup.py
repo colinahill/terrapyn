@@ -19,6 +19,7 @@ install_requires = [
     "cfgrib",
     "eccodes",
     "geopandas",
+    "bottleneck"
     # "shapely",
     # "xoa"
 ]
@@ -56,6 +57,7 @@ setuptools.setup(
     # readme = "README.md",
     license="BSD-3-Clause",
     install_requires=install_requires,
+    packages=setuptools.find_packages(exclude=("site",)),
     extras_require={"dev": dev_install_requires},
     classifiers=[
         "License :: OSI Approved :: BSD License",
