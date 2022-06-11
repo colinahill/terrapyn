@@ -9,19 +9,25 @@ with open("README.md", "r") as fh:
 
 install_requires = [
     "setuptools",
-    "notebook",
-    "numpy",
-    "pandas",
+    "matplotlib",
     "xarray",
-    "scipy",
-    "netcdf4",
+    "pandas",
     "dask",
-    "cfgrib",
-    "eccodes",
+    "bottleneck",
     "geopandas",
-    "bottleneck"
-    # "shapely",
-    # "xoa"
+    "netcdf4",
+    "pygeos",
+    "proj",
+    "shapely",
+    "scipy",
+    "numpy",
+    "ipykernel",
+    "pyarrow",
+    "notebook",
+    # pyshp
+    # shapely --no-binary shapely
+    # "cfgrib",
+    # "eccodes",
 ]
 
 dev_install_requires = [
@@ -54,7 +60,7 @@ setuptools.setup(
     author_email="colinalastairhill@gmail.com",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    # readme = "README.md",
+    readme="README.md",
     license="BSD-3-Clause",
     install_requires=install_requires,
     packages=setuptools.find_packages(exclude=("site",)),
@@ -62,7 +68,6 @@ setuptools.setup(
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
     include=("LICENSE", "terrapyn/py.typed"),
