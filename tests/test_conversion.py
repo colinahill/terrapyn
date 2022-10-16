@@ -178,12 +178,6 @@ class TestKelvin2Celsius(unittest.TestCase):
         self.assertEqual(result, 20)
 
 
-class TestMean(unittest.TestCase):
-    def test_single_value(self):
-        result = tp.conversion.mean(10, 20)
-        self.assertEqual(result, 15)
-
-
 class TestKilometersPerHour2MetersPerSecond(unittest.TestCase):
     def test_single_value(self):
         result = tp.conversion.kilometers_per_hour_to_meters_per_second(37)
@@ -254,7 +248,7 @@ class TestMonthlySoilHeatFlux(unittest.TestCase):
         np.testing.assert_almost_equal(result, 0.28, decimal=1)
 
 
-class testWindSpeed(unittest.TestCase):
+class testVectorsToScalar(unittest.TestCase):
     time = pd.date_range("2021-01-01", "2021-01-31")
     lat = range(0, 6)
     lon = range(0, 6)
@@ -273,7 +267,7 @@ class testWindSpeed(unittest.TestCase):
             2 * np.arange(self.time.size) * np.arange(self.time.size)
         )
 
-        obs = tp.conversion.wind_speed(self.ds["u10"], self.ds["v10"])
+        obs = tp.conversion.vectors_to_scalar(self.ds["u10"], self.ds["v10"])
         np.testing.assert_almost_equal(exp, obs)
 
 
@@ -296,12 +290,12 @@ class testWindDirection(unittest.TestCase):
     )
 
     def test_values(self):
-        exp = self.ones * np.array(
+        expected = self.ones * np.array(
             [270.0, 180.0, 90.0, 0.0, 225.0, 315.0, 45.0, 135.0, 330.0, 300.0, 240.0, 210.0, 150.0, 120.0, 60.0, 30.0]
         )
 
-        obs = tp.conversion.wind_direction(u=self.ds["u10"], v=self.ds["v10"], convention="from", unit="deg")
-        np.testing.assert_almost_equal(exp, obs)
+        result = tp.conversion.wind_direction(u=self.ds["u10"], v=self.ds["v10"], convention="from", unit="deg")
+        np.testing.assert_almost_equal(expected, result)
 
     def test_unit_rads(self):
         exp = self.ones * np.array(

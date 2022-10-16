@@ -1,3 +1,5 @@
+import typing as T
+
 import numpy as np
 
 import terrapyn as tp
@@ -53,13 +55,6 @@ def radians_to_degrees(radians):
         Value in angular degrees
     """
     return radians * (180.0 / np.pi)
-
-
-def mean(a, b):
-    """
-    Calculate the mean of 2 values/arrays
-    """
-    return (a + b) / 2.0
 
 
 def kilometers_per_hour_to_meters_per_second(speed):
@@ -541,6 +536,62 @@ def monthly_soil_heat_flux(t_month_prev, t_month, next_month=False):
     return factor * (t_month - t_month_prev)
 
 
+def vectors_to_scalar(u, v):
+    """Compute the scalar (length) from u and v vector components"""
+    return np.sqrt(u * u + v * v)
+
+
+def normalize_angle(angle_rad):
+    """
+    Return the input angle values in the range [0, 2 * pi].
+
+    Args:
+        angle_rad: Input angle in radians.
+
+    Returns:
+        Angle values in the range [0, 2 * pi]
+    """
+    return angle_rad % (2 * np.pi)
+
+
+def vectors_to_angle(u, v):
+    """Return the angle between two vectors in radians"""
+    return np.arctan2(v, u)
+
+
+def angle_to_bearing(angle, convention: str = "from", unit: str = "deg"):
+    """
+    Convert angle in radians to compass bearing convention, where the direction can be 'from'
+    (the meteorological convention) or 'to' (the oceanographic convention).
+    If angle is zero, bearing is set to 0 by convention.
+
+    Args:
+        angle: Angle values in radians to be converted from trigonometric to compass bearing convention.
+        convention: Convention to return direction where 'from' (default) returns the direction the wind is coming
+        from (meteorological convention), and 'to' returns the direction the wind is going towards
+        (oceanographic convention).
+        unit: Unit of angle, either 'rad' or 'deg' (default).
+
+    Returns:
+        Angle values in the interval [0, 360) degrees or [0, 2 * pi) radians.
+    """
+    if unit not in ("deg", "rad"):
+        raise ValueError("Unit must be 'deg' or 'rad'.")
+
+    if convention == "from":
+        compass = -np.pi / 2 - angle
+    elif convention == "to":
+        compass = np.pi / 2 - angle
+    else:
+        raise ValueError("Convention must be 'from' or 'to'.")
+
+    compass = normalize_angle(compass)
+
+    if unit == "deg":
+        return radians_to_degrees(compass)
+    return compass
+
+
 def wind_speed(u, v):
     """
     Compute the wind speed (scalar) from U and V vector components.
@@ -553,12 +604,12 @@ def wind_speed(u, v):
     Returns:
         Wind speed in the same unit as u and v.
     """
-    return np.sqrt(u * u + v * v)
+    return vectors_to_scalar(u, v)
 
 
 def wind_direction(u, v, convention: str = "from", unit: str = "deg"):
     """
-    Compute the wind speed from U and V components. If U=V=0, wind direction is set to 0 by convention.
+    Compute the wind direction from U and V components. If U=V=0, wind direction is set to 0 by convention.
 
     Args:
         u: U component of the wind based on the [ECMWF](https://apps.ecmwf.int/codes/grib/param-db/?id=131)
@@ -572,20 +623,33 @@ def wind_direction(u, v, convention: str = "from", unit: str = "deg"):
     Returns:
         The direction of the wind in the interval [0, 360) degrees or [0, 2*pi) radians.
     """
-    if unit not in ("deg", "rad"):
-        raise ValueError("Unit must be 'deg' or 'rad'.")
-    if convention not in ("from", "to"):
-        raise ValueError("Convention must be 'from' or 'to'.")
-
     zero_wind_mask = (np.abs(u) == 0) & (np.abs(v) == 0)
+    angle = vectors_to_angle(u, v)
+    bearing = angle_to_bearing(angle, convention=convention, unit=unit)
+    bearing = np.where(zero_wind_mask, 0, bearing)
+    return bearing
 
-    if convention == "from":
-        wd = -np.pi / 2 - np.arctan2(v, u)
-        wd = np.where(wd >= 0, wd, wd + 2 * np.pi)
-    elif convention == "to":
-        wd = +np.pi / 2 - np.arctan2(v, u)
-        wd = np.where(wd >= 0, wd, wd + 2 * np.pi)
-    if unit == "rad":
-        return wd * ~zero_wind_mask
-    elif unit == "deg":
-        return (wd * ~zero_wind_mask) * 180 / np.pi
+
+def cartesian_to_polar(x, y, compass: bool = False) -> T.Tuple:
+    """
+    Transform cartesian coordinates into polar coordinates (modulus and angle). Polar coordinates
+    are given in the range [0, 2 * pi] using the trigonometric or bearing convention depending on
+    **compass**.
+
+    Args:
+        x: Input values for x cartesian component.
+        y: Input values for y cartesian component.
+        compass: If True, angle values are given in bearing convention. If False (default), angle
+        values are given in trigonometric convention.
+
+    Returns:
+        Tuple of modulus and angle values of the vector field given by **x** and **y**.
+    """
+    modulus = np.sqrt(np.square(x) + np.square(y))
+
+    angle = vectors_to_angle(y, x)
+
+    if compass:
+        return modulus, angle_to_bearing(angle)
+    else:
+        return modulus, normalize_angle(angle)

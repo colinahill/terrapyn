@@ -176,6 +176,7 @@ def ensure_list(a: T.Any = None) -> T.List[T.Any]:
 
 
 def _call_resample_method(obj, method, **kwargs):
+    """Apply resample method to grouped object, either pandas"""
     if method == "sum":
         return obj.sum(**kwargs)
     elif method == "mean":
@@ -184,6 +185,7 @@ def _call_resample_method(obj, method, **kwargs):
         return obj.min(**kwargs)
     elif method == "max":
         return obj.max(**kwargs)
+    # elif method == "cumsum":
     else:
         raise ValueError(f"method=`{method}` not implemented")
 

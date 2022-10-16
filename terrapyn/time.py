@@ -939,7 +939,8 @@ def resample_time(
         time_dim: Name of the time dimension/index/column in `data` that will be used to determine the aggregation.
         freq: Resample frequency. Follows Pandas notation here
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects
-        resample_method: How to reduce/aggregate the data in each resampled group, one of 'mean', 'sum', 'max', 'min'.
+        resample_method: How to reduce/aggregate the data in each resampled group, one
+        of 'mean', 'sum', 'max', 'min', 'cumsum'.
         day_start_hour: The hour that is used as the start of the day (so 1 complete day is from
         `day_start_hour` to `day_start_hour` + 24h). Defaults to 0h.
 
@@ -954,6 +955,16 @@ def resample_time(
         day_start_hour=day_start_hour,
         other_grouping_columns=other_grouping_columns,
     )
+
+    # if resample_method == 'cumsum':
+
+    #     time_index = tp.utils.get_dim_values_from_data(data, time_dim)
+    #     # For xarray
+    #     if isinstance(grouped, (xr.core.groupby.DatasetGroupBy, xr.core.groupby.DataArrayGroupBy)):
+    #         cumsum = grouped.map(lambda x: x.cumsum(dim=dim, skipna=True, keep_attrs=True))
+    #         return cumsum.reindex({time_dim: time_index})
+    #     elif isinstance(grouped, (pd.core.groupby.generic.DataFrameGroupBy, pd.core.groupby.generic.SeriesGroupBy)):
+    #         return grouped.cumsum(**kwargs)
 
     return tp.utils._call_resample_method(grouped, resample_method)
 
@@ -1024,77 +1035,60 @@ def rolling(
 #         return date
 
 
-# def yearly_date_range(
-#     start_time: dt.datetime = None,
-#     end_time: dt.datetime = None,
-#     reset_time: bool = True,
-# ) -> T.List[dt.datetime]:
-#     """
-#     Generate a list of dates with a frequency of 1 year. If `reset_times==True`, the month, day
-#     and time are ignored (only using the year values). This is useful if you want to include the
-#     first and last year even if they are not complete.
+def yearly_date_range(
+    start_time: dt.datetime = None,
+    end_time: dt.datetime = None,
+    reset_time: bool = True,
+) -> T.List[dt.datetime]:
+    """
+    Generate a list of dates with a frequency of 1 year. If `reset_times==True`, the month, day
+    and time are ignored (only using the year values). This is useful if you want to include the
+    first and last year even if they are not complete.
 
-#     Args:
-#         start_time: Start date for range
-#         end_time: End date for range
-#         reset_time: Whether to ignore the month, day and time values of the dates
+    Args:
+        start_time: Start date for range
+        end_time: End date for range
+        reset_time: Whether to ignore the month, day and time values of the dates
 
-#     Returns:
-#         List of dates
+    Returns:
+        List of dates
 
-#     Example 1: Generate a range of dates with yearly frequency, ignoring months, days and time
+    Example 1: Generate a range of dates with yearly frequency, ignoring months, days and time
 
-#         >>> start_time = dt.datetime(1994, 11, 5, 7, 23)
-#         >>> end_time = dt.datetime(1997, 2, 7, 0)
-#         >>> yearly_date_range(start_time, end_time)  # doctest: +NORMALIZE_WHITESPACE
-#         [datetime.datetime(1994, 1, 1, 0, 0),
-#          datetime.datetime(1995, 1, 1, 0, 0),
-#          datetime.datetime(1996, 1, 1, 0, 0),
-#          datetime.datetime(1997, 1, 1, 0, 0)]
+        >>> start_time = dt.datetime(1994, 11, 5, 7, 23)
+        >>> end_time = dt.datetime(1997, 2, 7, 0)
+        >>> yearly_date_range(start_time, end_time)  # doctest: +NORMALIZE_WHITESPACE
+        [datetime.datetime(1994, 1, 1, 0, 0),
+         datetime.datetime(1995, 1, 1, 0, 0),
+         datetime.datetime(1996, 1, 1, 0, 0),
+         datetime.datetime(1997, 1, 1, 0, 0)]
 
-#     Example 2: Generate a range of dates with yearly frequency, including months, days and time
+    Example 2: Generate a range of dates with yearly frequency, including months, days and time
 
-#         >>> start_time = dt.datetime(1994, 11, 5, 7, 23)
-#         >>> end_time = dt.datetime(1997, 2, 7, 0)
-#         >>> yearly_date_range(start_time, end_time, reset_time=False)  # doctest: +NORMALIZE_WHITESPACE
-#         [datetime.datetime(1994, 11, 5, 7, 23),
-#          datetime.datetime(1995, 11, 5, 7, 23),
-#          datetime.datetime(1996, 11, 5, 7, 23)]
-#     """
-#     if reset_time:
-#         # Only keep year values
-#         start_time = dt.datetime(start_time.year, 1, 1)
-#         end_time = dt.datetime(end_time.year, 1, 1)
-#     return list(rrule.rrule(freq=rrule.YEARLY, dtstart=start_time, until=end_time))
-
-
-# def select_period(data, start_time=None, end_time=None):
-#     """
-#     Selects the period for pd.DataFrame, pd.Series, xr.DataArray, xr.Dataset
-#     """
-#     start_time = to_datetime64(start_time)
-#     end_time = to_datetime64(end_time)
-#     check_wf_standard(data)
-#     if isinstance(data, (xr.DataArray, xr.Dataset)):
-#         return data.sel(time=slice(start_time, end_time))
-#     elif isinstance(data, pd.DataFrame):
-#         idx = pd.IndexSlice
-#         return data.loc[idx[start_time:end_time, :], :]
-#     elif isinstance(data, pd.Series):
-#         idx = pd.IndexSlice
-#         return data.loc[idx[start_time:end_time, :]]
+        >>> start_time = dt.datetime(1994, 11, 5, 7, 23)
+        >>> end_time = dt.datetime(1997, 2, 7, 0)
+        >>> yearly_date_range(start_time, end_time, reset_time=False)  # doctest: +NORMALIZE_WHITESPACE
+        [datetime.datetime(1994, 11, 5, 7, 23),
+         datetime.datetime(1995, 11, 5, 7, 23),
+         datetime.datetime(1996, 11, 5, 7, 23)]
+    """
+    if reset_time:
+        # Only keep year values
+        start_time = dt.datetime(start_time.year, 1, 1)
+        end_time = dt.datetime(end_time.year, 1, 1)
+    return list(rrule.rrule(freq=rrule.YEARLY, dtstart=start_time, until=end_time))
 
 
-# def _check_valid_resample_method(
-#     resample_method: str = None, options: T.List[str] = ["sum", "mean", "min", "max", "cumsum"]
-# ):
-#     """
-#     Check if the resample method string is valid
-#     """
-#     if resample_method in options:
-#         return True
-#     else:
-#         raise ValueError(f"`resample_method` = '{resample_method}' is not a valid option")
+def select_time_range(data, start_time=None, end_time=None):
+    """
+    Select a time range in data for pd.DataFrame, pd.Series, xr.DataArray, xr.Dataset
+    """
+    if isinstance(data, (xr.DataArray, xr.Dataset)):
+        return data.sel(time=slice(start_time, end_time))
+    elif isinstance(data, pd.DataFrame):
+        return data.loc[pd.IndexSlice[start_time:end_time, :], :]
+    elif isinstance(data, pd.Series):
+        return data.loc[pd.IndexSlice[start_time:end_time, :]]
 
 
 # def freq_to_timedelta64(freq):
