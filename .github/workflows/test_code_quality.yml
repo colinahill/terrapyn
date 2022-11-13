@@ -13,14 +13,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
       - name: Set-up MiniConda environment
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-            activate-environment: terrapyn
-            environment-file: environment.yml
-            python-version: 3.10
-            auto-activate-base: false
+          activate-environment: terrapyn
+          environment-file: environment.yml
+          python-version: 3.10
+          auto-activate-base: false
+      - run: conda info
       - name: Lint with Flake8
         run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
       - name: Format with Black
