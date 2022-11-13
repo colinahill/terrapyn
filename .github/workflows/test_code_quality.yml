@@ -6,27 +6,55 @@ on:
   pull_request:
     branches: [main, development]
 
-jobs:
 
-  build-linux:
+jobs:
+  miniconda:
+    name: Miniconda ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set-up Python 3.10 and MiniConda environment
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        $CONDA/bin/conda env update --file environment.yml --name base
-    - name: Lint with Flake8
-      run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
-    - name: Format with Black
-      run: black --check terrapyn/ tests/
-    # - name: Type Check with MyPy
-    #   run: mypy --strict --config-file=mypy.ini terrapyn/
-    - name: Test & Coverage with Pytest
-      run: pytest terrapyn/ tests/
-    - name: Generate coverage badge
-      run: coverage-badge -f -o .github/coverage.svg
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: terrapyn
+          environment-file: environment.yml
+          python-version: 3.10
+          auto-activate-base: false
+      - shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+      - name: Lint with Flake8
+        run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
+      - name: Format with Black
+        run: black --check terrapyn/ tests/
+      # - name: Type Check with MyPy
+      #   run: mypy --strict --config-file=mypy.ini terrapyn/
+      - name: Test & Coverage with Pytest
+        run: pytest terrapyn/ tests/
+      - name: Generate coverage badge
+        run: coverage-badge -f -o .github/coverage.svg
+
+# jobs:
+
+#   build-linux:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v2
+#     - name: Set-up Python 3.10 and MiniConda environment
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: "3.10"
+#     - name: Install dependencies
+#       run: |
+#         # $CONDA is an environment variable pointing to the root of the miniconda directory
+#         $CONDA/bin/conda env update --file environment.yml --name base
+#     - name: Lint with Flake8
+#       run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
+#     - name: Format with Black
+#       run: black --check terrapyn/ tests/
+#     # - name: Type Check with MyPy
+#     #   run: mypy --strict --config-file=mypy.ini terrapyn/
+#     - name: Test & Coverage with Pytest
+#       run: pytest terrapyn/ tests/
+#     - name: Generate coverage badge
+#       run: coverage-badge -f -o .github/coverage.svg
