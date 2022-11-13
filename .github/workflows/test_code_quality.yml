@@ -18,7 +18,8 @@ jobs:
         with:
           python-version: 3.9
       - name: Install dependencies
-        run: pip install -e .[dev]
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        run: $CONDA/bin/conda env update -f environment.yml
       - name: Lint with Flake8
         run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
       - name: Format with Black
