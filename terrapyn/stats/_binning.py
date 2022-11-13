@@ -6,7 +6,7 @@ import xarray as xr
 
 
 def _return_sorted_array(values: T.Union[float, int, np.ndarray, T.List]) -> np.ndarray:
-    """ Sort values or ensure value is an array """
+    """Sort values or ensure value is an array"""
     if isinstance(values, (T.List, np.ndarray)):
         return np.sort(values)
     else:
