@@ -15,12 +15,11 @@ jobs:
     - name: Set-up Python 3.10 and MiniConda environment
       uses: actions/setup-python@v2
       with:
-        python-version: 3.10
+        python-version: "3.10"
     - name: Install dependencies
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
-        $CONDA/bin/conda env update --file environment.yml --name terrapyn
-        $CONDA/bin/conda activate terrapyn
+        $CONDA/bin/conda env update --file environment.yml --name base
     - name: Lint with Flake8
       run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
     - name: Format with Black
