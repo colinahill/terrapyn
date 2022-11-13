@@ -21,7 +21,6 @@ jobs:
             environment-file: environment.yml
             python-version: 3.9
             auto-activate-base: false
-        run: conda info
       - name: Lint with Flake8
         run: flake8 --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
       - name: Format with Black
