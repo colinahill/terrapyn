@@ -14,7 +14,7 @@ The name is pronounced the same as "terrapin", a type of [fresh water turtle](ht
 
 ## Setup
 
-An Anaconda Python distribution is required. Either `Conda` or `Miniconda` are suitable: see [conda installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
+An Anaconda Python distribution is required. Either `Miniconda` or `Conda` are suitable: see [conda installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
 
 Once (mini)conda is installed, clone the repository:
 
@@ -29,18 +29,13 @@ cd terrapyn
 conda env create -f environment.yml
 ```
 
-Then the package can be installed
+The `terrapyn` package is installed in the `terrapyn` environment, and can be used after activating the new conda environment
 
-```
-pip install .
-
-# OR for development
-pip install -e .
+```bash
+conda activate terrapyn
 ```
 
-OR
-
-Installation via pip:
+Alternatively the the package can be installed in an existing Python environment via pip:
 
 ```bash
 pip install terrapyn
@@ -55,9 +50,4 @@ pip install .
 
 # OR for development:
 pip install -e .[dev]
-```
-
-Then, the ipython kernel can be installed to use Jupyter notebooks
-```
-ipython kernel install --user --name=terrapyn
 ```
