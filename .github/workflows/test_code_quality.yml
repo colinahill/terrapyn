@@ -26,15 +26,15 @@ jobs:
       - name: Lint with Flake8
         run: |
           conda install flake8
-          flake8 . --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
+          $CONDA/bin/flake8 . --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
       - name: Format with Black
         run: |
           conda install black
-          black --check terrapyn/ tests/
+          $CONDA/bin/black --check terrapyn/ tests/
       - name: Pytest
         run: |
           conda install pytest
-          pytest terrapyn/ tests/
+          $CONDA/bin/pytest terrapyn/ tests/
       # - name: Generate coverage badge
       #   run: coverage-badge -f -o .github/coverage.svg
 
