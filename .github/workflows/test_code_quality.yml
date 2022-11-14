@@ -26,7 +26,7 @@ jobs:
       - name: Lint with Flake8
         run: |
           conda install flake8
-          $CONDA/bin/flake8 . --extend-ignore=D1,D2,D4,I0,I1,I2 terrapyn/ tests/
+          $CONDA/bin/flake8 terrapyn/ tests/ --extend-ignore=D1,D2,D4,I0,I1,I2
       - name: Format with Black
         run: |
           conda install black
