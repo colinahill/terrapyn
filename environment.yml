@@ -4,21 +4,21 @@ channels:
 dependencies:
   - pip
   - python>=3.10
-  - xarray
+  - xarray>=2022.12.0
   - pandas
-  - dask
-  - matplotlib
-  - shapely
-  - cartopy
-  - bottleneck
-  - geopandas
-  - netcdf4
   - numpy
   - scipy
+  - geopandas
+  - dask
+  - matplotlib
+  - bottleneck
+  - shapely
+  - cartopy
   - netcdf4
   - ipykernel
   - pyarrow
   - pip:
+    - -e . # terrapyn
     - pytest
     - pytest-cov
     - flake8
@@ -37,4 +37,3 @@ dependencies:
     - mkdocs-section-index
     - mkdocs-include-markdown-plugin
     - coverage-badge
-    - -e . # terrapyn
