@@ -19,19 +19,22 @@ jobs:
           environment-file: environment.yml
           python-version: "3.10"
           auto-activate-base: false
-      - shell: bash -l {0}
+      # - shell: bash -l {0}
         run: |
           conda info
           conda list
       - name: Lint with Flake8
+        shell: bash -l {0}
         run: |
           conda install flake8
           $CONDA/bin/flake8 terrapyn/ tests/ --extend-ignore=D1,D2,D4,I0,I1,I2
       - name: Format with Black
+        shell: bash -l {0}
         run: |
           conda install black
           $CONDA/bin/black --check terrapyn/ tests/
       - name: Pytest
+        shell: bash -l {0}
         run: |
           conda install pytest
           conda install pytest-cov
