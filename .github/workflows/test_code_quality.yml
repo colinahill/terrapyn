@@ -27,20 +27,19 @@ jobs:
         run: |
           conda install flake8
           flake8 terrapyn/ tests/ --extend-ignore=D1,D2,D4,I0,I1,I2
-      # - name: Format with Black
-      #   run: |
-      #     conda install black
-      #     $CONDA/bin/black --check terrapyn/ tests/
+      - name: Format with Black
+        run: |
+          conda install black
+          black --check terrapyn/ tests/
       # - name: Build
       #   shell: bash -l {0}
       #   run: |
       #     pip install -e .
-      # - name: Run tests
-      #   shell: bash -l {0}
-      #   run: |
-      #     conda install pytest
-      #     conda install pytest-cov
-      #     $CONDA/bin/pytest terrapyn/ tests/
+      - name: Run tests
+        run: |
+          conda install pytest
+          conda install pytest-cov
+          pytest terrapyn/ tests/
       # - name: Generate coverage badge
       #   run: coverage-badge -f -o .github/coverage.svg
 
