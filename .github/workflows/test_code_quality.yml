@@ -1,49 +1,49 @@
-name: Test Code Quality
+# name: Test Code Quality
 
-on:
-  push:
-    branches: [main, development]
-  pull_request:
-    branches: [main, development]
+# on:
+#   push:
+#     branches: [main, development]
+#   pull_request:
+#     branches: [main, development]
 
 
-jobs:
-  miniconda:
-    name: Miniconda ubuntu-latest
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: terrapyn
-          environment-file: environment.yml
-          python-version: "3.10"
-          auto-activate-base: false
-      - shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-      - name: Lint with Flake8
-        run: |
-          conda install flake8
-          $CONDA/bin/flake8 terrapyn/ tests/ --extend-ignore=D1,D2,D4,I0,I1,I2
-      - name: Format with Black
-        run: |
-          conda install black
-          $CONDA/bin/black --check terrapyn/ tests/
-      - name: Build
-        shell: bash -l {0}
-        run: |
-          pip install -e .
-      - name: Run tests
-        shell: bash -l {0}
-        run: pytest terrapyn/ tests/
-        #  |
-        #   conda install pytest
-        #   conda install pytest-cov
-        #   $CONDA/bin/pytest terrapyn/ tests/
-      # - name: Generate coverage badge
-      #   run: coverage-badge -f -o .github/coverage.svg
+# jobs:
+#   miniconda:
+#     name: Miniconda ubuntu-latest
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: conda-incubator/setup-miniconda@v2
+#         with:
+#           activate-environment: terrapyn
+#           environment-file: environment.yml
+#           python-version: "3.10"
+#           auto-activate-base: false
+#       - shell: bash -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: Lint with Flake8
+#         run: |
+#           conda install flake8
+#           $CONDA/bin/flake8 terrapyn/ tests/ --extend-ignore=D1,D2,D4,I0,I1,I2
+#       - name: Format with Black
+#         run: |
+#           conda install black
+#           $CONDA/bin/black --check terrapyn/ tests/
+#       - name: Build
+#         shell: bash -l {0}
+#         run: |
+#           pip install -e .
+#       - name: Run tests
+#         shell: bash -l {0}
+#         run: pytest terrapyn/ tests/
+#          |
+#           conda install pytest
+#           conda install pytest-cov
+#           $CONDA/bin/pytest terrapyn/ tests/
+#       # - name: Generate coverage badge
+#       #   run: coverage-badge -f -o .github/coverage.svg
 
 # jobs:
 
@@ -69,3 +69,43 @@ jobs:
 #       run: pytest terrapyn/ tests/
 #     - name: Generate coverage badge
 #       run: coverage-badge -f -o .github/coverage.svg
+
+name: Test Code Quality
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        conda env update --file environment.yml --name base
+    - name: Lint with flake8
+      run: |
+        conda install flake8
+        flake8 . --extend-ignore=D1,D2,D4,I0,I1,I2
+    - name: Format with Black
+      run: |
+        conda install black
+        black --check terrapyn/ tests/
+    - name: Test with pytest
+      run: |
+        conda install pytest
+        pytest
