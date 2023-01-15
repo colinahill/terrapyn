@@ -24,11 +24,8 @@ jobs:
       - name: Format with Black
         run: black --check terrapyn/ tests/
       - name: Run tests
-        run: pytest --cov=terrapyn --cov-report=xml --verbose terrapyn/ tests/
-      - name: Make Coverage Badge
-        uses: action-badges/cobertura-coverage-xml-badges@0.2.1
-        with:
-          file-name: coverage.svg
-          badge-branch: badges
-          github-token: '${{ secrets.GITHUB_TOKEN }}'
-          coverage-file-name: ./coverage.xml
+        run: |
+          pip install pytest-json-report
+          pytest --cov=terrapyn --json-report --json-report-summary terrapyn/ tests/
+      - name: Update Coverage Badge
+        uses: we-cli/coverage-badge-action@main
