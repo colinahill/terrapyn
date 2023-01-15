@@ -164,12 +164,7 @@ def groupby_time(
     time_dim: str = "time",
     grouping: str = "week",
     other_grouping_keys: T.Optional[T.Union[str, T.List[str]]] = None,
-) -> T.Union[
-    xr.core.groupby.DatasetGroupBy,
-    xr.core.groupby.DataArrayGroupBy,
-    pd.core.groupby.generic.DataFrameGroupBy,
-    pd.core.groupby.generic.SeriesGroupBy,
-]:
+):
     """
     Generate a `groupby` object where data are grouped by `time` and (optionally) `id`.
     Works with Pandas Series/DataFrame as well as Xarray Dataset/DataArray.

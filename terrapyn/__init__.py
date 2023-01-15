@@ -1,6 +1,3 @@
-__author__ = "Colin Hill"
-__email__ = "colinalastairhill@gmail.com"
-
 from . import (
     conversion,
     dask_utils,

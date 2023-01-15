@@ -7,49 +7,11 @@ version = os.getenv("VERSION", "0.0.2")
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-install_requires = [
-    "setuptools",
-    "matplotlib",
-    "xarray",
-    "pandas",
-    "dask",
-    "bottleneck",
-    "geopandas",
-    "netcdf4",
-    "pygeos",
-    "proj",
-    "shapely",
-    "scipy",
-    "numpy",
-    "ipykernel",
-    "pyarrow",
-    "notebook",
-    # pyshp
-    # shapely --no-binary shapely
-    # "cfgrib",
-    # "eccodes",
-]
+with open("requirements.txt") as f:
+    install_requires = f.read().splitlines()
 
-dev_install_requires = [
-    "pytest",
-    "pytest-cov",
-    "flake8",
-    "flake8-docstrings",
-    "flake8-import-order",
-    "flake8-colors",
-    "black",
-    "mypy",
-    "isort",
-    "pre-commit",
-    "freezegun",
-    "mkdocs-material",
-    "mkdocs-gen-files",
-    "mkdocstrings-python",
-    "mkdocs-literate-nav",
-    "mkdocs-section-index",
-    "mkdocs-include-markdown-plugin",
-    "coverage-badge",
-]
+with open("dev-requirements.txt") as f:
+    dev_install_requires = f.read().splitlines()
 
 setuptools.setup(
     name="terrapyn",

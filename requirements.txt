@@ -1,0 +1,31 @@
+# python>=3.10
+xarray>=2022.12.0
+pandas
+geopandas
+numpy
+scipy
+dask
+matplotlib
+bottleneck
+shapely
+netcdf4
+ipykernel
+pyarrow
+#  cartopy
+
+# "setuptools",
+# "matplotlib",
+# "xarray",
+# "pandas",
+# "dask",
+# "bottleneck",
+# "geopandas",
+# "netcdf4",
+# "pygeos",
+# "proj",
+# "shapely",
+# "scipy",
+# "numpy",
+# "ipykernel",
+# "pyarrow",
+# "notebook",
