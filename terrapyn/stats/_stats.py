@@ -1,5 +1,3 @@
-"""Statistical and mathematical operations"""
-
 import typing as T
 
 import numpy as np
@@ -9,7 +7,7 @@ import pandas as pd
 def nearest_multiple(x, base: float = 0.5) -> np.ndarray:
     """
     Round a value to the nearest multiple of a given base. Rounding follows `numpy.round`,
-    so 0.5 is closer to 1 than 0. Works for single values or numpy.arrays or lists.
+    so 0.5 is closer to 1 than 0. Works for single values or arrays/lists.
 
     Args:
         x: Value/array

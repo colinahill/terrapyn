@@ -1,0 +1,39 @@
+name: terrapyn
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - python>=3.10
+  - xarray>=2022.12.0
+  - pandas
+  - numpy
+  - scipy
+  - geopandas
+  - dask
+  - matplotlib
+  - bottleneck
+  - shapely
+  - cartopy
+  - netcdf4
+  - ipykernel
+  - pyarrow
+  - pip:
+    - -e . # terrapyn
+    - pytest
+    - pytest-cov
+    - flake8
+    - flake8-docstrings
+    - flake8-import-order
+    - flake8-colors
+    - black
+    - mypy
+    - isort
+    - pre-commit
+    - freezegun
+    - mkdocs-material
+    - mkdocs-gen-files
+    - mkdocstrings-python
+    - mkdocs-literate-nav
+    - mkdocs-section-index
+    - mkdocs-include-markdown-plugin
+    - coverage-badge

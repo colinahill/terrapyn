@@ -1,6 +1,13 @@
-__author__ = "Colin Hill"
-__email__ = "colinalastairhill@gmail.com"
+from . import (
+    conversion,
+    dask_utils,
+    indices,
+    params,
+    space,
+    stats,
+    time,
+    utils,
+    validation,
+)
 
-from . import dask_utils, indices, stats, time, utils
-
-__all__ = ["time", "utils", "stats", "indices", "dask_utils"]
+__all__ = ["time", "utils", "stats", "validation", "indices", "dask_utils", "conversion", "space", "params"]
