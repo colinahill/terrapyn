@@ -26,6 +26,6 @@ jobs:
       - name: Run tests
         run: |
           pip install pytest-json-report
-          pytest --cov=terrapyn --json-report --json-report-summary terrapyn/ tests/
+          pytest --cov=terrapyn --json-report --json-report-summary --json-report-file=./coverage/coverage-summary.json terrapyn/ tests/
       - name: Update Coverage Badge
         uses: we-cli/coverage-badge-action@main
