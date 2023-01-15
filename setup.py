@@ -2,7 +2,7 @@ import os
 
 import setuptools
 
-version = os.getenv("VERSION", "0.0.2")
+version = os.getenv("VERSION", "0.0.5")
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
