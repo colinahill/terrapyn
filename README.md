@@ -14,28 +14,7 @@ The name is pronounced the same as "terrapin", a type of [fresh water turtle](ht
 
 ## Setup
 
-An Anaconda Python distribution is required. Either `Miniconda` or `Conda` are suitable: see [conda installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
-
-Once (mini)conda is installed, clone the repository:
-
-```bash
-git clone https://github.com/colinahill/terrapyn.git
-```
-
-Navigate into the repository and create a new conda environment with all required dependencies:
-
-```bash
-cd terrapyn
-conda env create -f environment.yml
-```
-
-The `terrapyn` package is installed in the `terrapyn` environment, and can be used after activating the new conda environment
-
-```bash
-conda activate terrapyn
-```
-
-Alternatively the the package can be installed in an existing Python environment via pip:
+The package can be installed in an existing Python environment via pip:
 
 ```bash
 pip install terrapyn
