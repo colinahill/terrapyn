@@ -24,8 +24,9 @@ jobs:
       - name: Format with Black
         run: black --check terrapyn/ tests/
       - name: Run tests
-        run: |
-          pip install pytest-json-report
-          pytest --cov=terrapyn --json-report --json-report-file=./coverage/coverage-summary.json terrapyn/ tests/
+        run: pytest terrapyn/ tests/
       - name: Update Coverage Badge
-        uses: we-cli/coverage-badge-action@main
+        run: |
+          pip install genbadge[all]
+          coverage xml -o ./reports/coverage/coverage.xml
+          genbadge coverage -i ./reports/coverage/coverage.xml -o ./reports/coverage/coverage-badge.svg
