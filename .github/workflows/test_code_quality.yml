@@ -29,6 +29,3 @@ jobs:
         run: |
           pip install readme-coverage-badger
           readme-cov
-          # pip install genbadge[all]
-          # coverage xml -o ./reports/coverage/coverage.xml
-          # genbadge coverage -i ./reports/coverage/coverage.xml -o ./reports/coverage/coverage-badge.svg
