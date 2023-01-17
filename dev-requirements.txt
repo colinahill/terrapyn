@@ -1,11 +1,11 @@
 pytest
 pytest-cov
+readme-coverage-badger
 flake8
 flake8-docstrings
 flake8-import-order
 flake8-colors
 black
-# mypy
 isort
 pre-commit
 freezegun
@@ -15,4 +15,3 @@ freezegun
 # mkdocs-literate-nav
 # mkdocs-section-index
 # mkdocs-include-markdown-plugin
-# coverage-badge

@@ -1,6 +1,6 @@
 # terrapyn
 
-[![coverage](./reports/coverage/coverage-badge.svg?dummy=8484744)](./reports/coverage/index.html)
+![Code Coverage](https://img.shields.io/badge/Coverage-83%25-yellowgreen.svg)
 [![PyPI version](https://badge.fury.io/py/terrapyn.svg)](https://badge.fury.io/py/terrapyn)
 ![versions](https://img.shields.io/pypi/pyversions/terrapyn.svg)
 [![GitHub license](https://img.shields.io/pypi/l/terrapyn)](https://github.com/colinahill/terrapyn/blob/main/LICENSE.md)
