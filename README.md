@@ -13,21 +13,45 @@ The name is pronounced the same as "terrapin", a type of [fresh water turtle](ht
 - Documentation: https://colinahill.github.io/terrapyn.
 - Free software: BSD-3-Clause
 
-## Setup
+## Setup/Installation
 
+### Python environment setup
+An environment with Python version `3.10` or later is required. If you don't have this, it can be created using [Pyenv](https://github.com/pyenv/pyenv) which should be installed first. After installing Pyenv, download and install Python `3.10` using
+
+```bash
+pyenv install 3.10
+```
+
+If you already have Python version `3.10` or later you can skip this step.
+
+### Install
+
+#### Via Pip
 The package can be installed in an existing Python environment via pip:
 
 ```bash
 pip install terrapyn
 ```
 
-OR from source:
+#### From source
+Clone the repo and install the package:
 
 ```bash
-git clone https://github.com/colinahill/terrapyn.git
-cd terrapyn
-pip install .
-
-# OR for development:
-pip install -e .[dev]
+git clone https://github.com/colinahill/terrapyn.git && cd terrapyn
 ```
+
+This project uses [Poetry](https://python-poetry.org/) to manage dependencies. In the case where Poetry doesn't automatically find the correct Python path, you can set it with
+
+```bash
+pyenv local 3.10
+poetry env use 3.10
+```
+
+Then install the package
+```bash
+poetry install  # Creates a virtualenv and installs package into it
+poetry shell  # Opens a sub-shell in the virtualenv
+```
+
+
+
