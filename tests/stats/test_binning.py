@@ -12,7 +12,6 @@ TEST_DATA_PATH = PACKAGE_ROOT_DIR / "tests" / "data"
 
 
 class TestDigitize(unittest.TestCase):
-
     da = xr.DataArray(
         np.array([0.7, 3, 5]).reshape(3, 1, 1),
         dims=["time", "lat", "lon"],

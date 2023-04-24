@@ -7,7 +7,6 @@ import terrapyn as tp
 
 
 class TestSigmaClip(unittest.TestCase):
-
     a = np.concatenate((np.linspace(9.5, 10.5, 31), np.linspace(0, 20, 10), np.array([np.nan])))
     df = pd.DataFrame(np.column_stack([a, a - 1]), columns=["a", "b"])
 
