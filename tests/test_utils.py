@@ -14,7 +14,6 @@ class TestPandasToGeoPandas(unittest.TestCase):
 
 
 class TestSetDimValuesInData(unittest.TestCase):
-
     df = pd.DataFrame(
         {
             "time": pd.DatetimeIndex(
@@ -71,7 +70,6 @@ class TestSetDimValuesInData(unittest.TestCase):
 
 
 class TestRemoveListElements(unittest.TestCase):
-
     input_list = ["item", 5, "foo", 3.14, True]
 
     def test_remove_element(self):

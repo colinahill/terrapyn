@@ -29,7 +29,6 @@ class BBox:
     """
 
     def __init__(self, geometry=None, min_lon=-180, max_lon=180, min_lat=-90, max_lat=90):
-
         if geometry is None:
             self.geom = shapely.geometry.box(minx=min_lon, miny=min_lat, maxx=max_lon, maxy=max_lat)
         else:
@@ -154,7 +153,6 @@ def get_data_at_coords(
 
     # Retrieve nearest non-NaN values, for each coordinate that is not lat or lon (so time etc.)
     if method == "nearest" and ignore_nan:
-
         # Convert dataarray to dataframe
         points = data.to_dataframe().dropna()
 
@@ -385,7 +383,6 @@ def crop_to_bbox(
             return data.sel({lat_name: slice(bbox.max_lat, bbox.min_lat)})
 
     elif isinstance(data, (pd.DataFrame, pd.Series, gpd.GeoDataFrame)):
-
         # If data is geopandas.geodataframe, first try to select using shapely geometry
         if isinstance(data, gpd.GeoDataFrame):
             if geometry_name in data.columns:

@@ -6,7 +6,6 @@ import terrapyn as tp
 
 
 class TestChunkXarray(unittest.TestCase):
-
     ds = xr.open_dataset("tests/data/lat_10_lon_10_time_10_D_test_data.nc")
 
     def test_dataset_chunk_size_provided(self):

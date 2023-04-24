@@ -8,7 +8,6 @@ import terrapyn as tp
 
 
 class TestCalculateQuantiles(unittest.TestCase):
-
     np.random.seed(42)
     n_lat = 10
     n_lon = 5
@@ -70,7 +69,6 @@ class TestCalculateQuantiles(unittest.TestCase):
 
 
 class TestRank(unittest.TestCase):
-
     np.random.seed(42)
     n_lat = 10
     n_lon = 5

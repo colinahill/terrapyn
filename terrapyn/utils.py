@@ -193,7 +193,6 @@ def _call_resample_method(obj, method, **kwargs):
 def remove_list_elements(input_list: T.List = None, remove_list: T.List = None) -> T.List:
     """Removes all elements in `remove_list` from `input_list` and returns new list object"""
     if input_list is not None and remove_list is not None:
-
         # convert all single values to a list
         remove_list = ensure_list(remove_list)
 
