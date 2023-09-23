@@ -62,7 +62,6 @@ def _fit_gamma_pdf(array: np.ndarray = None) -> np.ndarray:
     finite_values_mask = np.isfinite(array) & (array > 0)
 
     if np.any(finite_values_mask):
-
         finite_values = array[finite_values_mask]
 
         # # Fit Gamma PDF to data using scipy
@@ -344,13 +343,11 @@ def calc_spi(
 
     # Use Gamma Parameters provided, otherwise fit the Gamma distribution
     if gamma_parameters is None:
-
         # Calculate Gamma distribution parameters for each monthly group
         gamma_parameters = data_rolling_grouped.apply(tp.indices.spi.fit_gamma_pdf)
 
     # For each month, calculate the Gamma CDF
     if isinstance(data, pd.Series):
-
         # Check length of gamma_parameters is equal to the number of months
         # gamma_parameters is a list of tuples of (shape, scale)
         # if len(gamma_parameters) != data_rolling_grouped.ngroups:

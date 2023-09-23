@@ -95,7 +95,6 @@ class TestGetTimeFromData(unittest.TestCase):
 
 
 class TestGroupbyTime(unittest.TestCase):
-
     ds = xr.open_dataset(TEST_DATA_PATH / "lat_2_lon_2_time_15_D_test_data.nc")
 
     def test_dataset_groupby_week(self):
@@ -191,7 +190,6 @@ class TestMonthlyDateRange(unittest.TestCase):
 
 
 class TestAddDayOfYearVariable(unittest.TestCase):
-
     ds = xr.open_dataset(TEST_DATA_PATH / "lat_2_lon_2_time_366_D_test_data.nc")
 
     def test_dataset_modify_ordinal_days(self):
@@ -242,7 +240,6 @@ class TestCheckStartEndTimeValidity(unittest.TestCase):
 
 
 class TestGetDayOfYear(unittest.TestCase):
-
     ds = xr.open_dataset(TEST_DATA_PATH / "lat_2_lon_2_time_366_D_test_data.nc")
 
     def test_dataset_ordinal_days(self):
@@ -408,7 +405,6 @@ class TestDatetimeindexToLocalTimeTzNaive(unittest.TestCase):
 
 
 class TestSetTimeInData(unittest.TestCase):
-
     df = pd.DataFrame(
         {"time": pd.date_range("2019-03-15 06:00", freq="D", periods=2), "id": ["a", "b"], "val": [1, 2]}
     ).set_index(["time", "id"])

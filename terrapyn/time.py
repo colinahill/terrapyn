@@ -742,7 +742,6 @@ def _set_time_in_data(
         The original `data` with modified timestamps in `time_dim`.
     """
     if new_times is None:  # If no replacement times are given
-
         if hours_to_subtract is not None:
             # Subtract some number of hours from the times, ignoring `set_time_to_midnight`
             new_times = get_time_from_data(data, time_dim=time_dim) - dt.timedelta(hours=hours_to_subtract)
@@ -870,7 +869,6 @@ def groupby_freq(
     offset = dt.timedelta(hours=day_start_hour)
 
     if isinstance(data, (xr.DataArray, xr.Dataset)):
-
         # Bug with xarray.Dataset.resample where it ignores the `base` argument, so a workaround is
         # implemented here, where the times are modified and `loffset` is used to re-label the time
         return _set_time_in_data(data, time_dim=time_dim, hours_to_subtract=day_start_hour).resample(
@@ -878,7 +876,6 @@ def groupby_freq(
         )
 
     elif isinstance(data, (pd.Series, pd.DataFrame)):
-
         is_dim_in_index = tp.utils._dim_in_pandas_index(data.index, time_dim)
 
         if is_dim_in_index:
@@ -894,7 +891,6 @@ def groupby_freq(
             if isinstance(data, pd.DataFrame):
                 # time_dim not in index, look in columns for DataFrames
                 if time_dim in data.columns:
-
                     if other_grouping_columns is None:
                         return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
                     else:

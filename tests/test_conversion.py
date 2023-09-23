@@ -234,7 +234,6 @@ class TestActualVapourPressure(unittest.TestCase):
 
 
 class TestMonthlySoilHeatFlux(unittest.TestCase):
-
     tmean_month_1 = 14.1
     tmean_month_2 = 16.1
     tmean_month_3 = 18.8
@@ -272,7 +271,6 @@ class testVectorsToScalar(unittest.TestCase):
 
 
 class testWindDirection(unittest.TestCase):
-
     time = pd.date_range("2021-01-01", "2021-01-16")
     lat = range(0, 6)
     lon = range(0, 6)

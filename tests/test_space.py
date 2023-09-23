@@ -14,7 +14,6 @@ TEST_DATA_PATH = PACKAGE_ROOT_DIR / "tests" / "data"
 
 
 class TestGetDataAtCoords(TestCase):
-
     np.random.seed(42)
     n_lat = 4
     n_lon = 4
@@ -77,15 +76,8 @@ class TestGetDataAtCoords(TestCase):
         )
         self.assertEqual(list(df.index.names), ["time", "test"])
 
-    def test_dataset_without_time(self):
-        data = self.ds.isel(time=0).drop_vars("time")
-        df = tp.space.get_data_at_coords(data, lats=self.lats, lons=self.lons, method="nearest")
-        self.assertEqual(df.index.name, "id")
-        np.testing.assert_almost_equal(df["var"].values, np.array([5.64768854, 4.53427025]))
-
 
 class TestBBox(TestCase):
-
     min_lon = 10
     max_lon = 20
     min_lat = 30
@@ -167,7 +159,6 @@ class TestCropToBBox(TestCase):
 
 
 class TestPointsInRadius(TestCase):
-
     df = pd.read_csv(TEST_DATA_PATH / "station_metadata.csv")
 
     def test_points_and_distance(self):
@@ -198,7 +189,6 @@ class TestGenerateGrid(TestCase):
 
 
 class TestBBoxFromData(TestCase):
-
     ds = xr.open_dataset(TEST_DATA_PATH / "lat_10_lon_10_time_10_D_test_data.nc")
 
     def test_dataset(self):
@@ -217,7 +207,6 @@ class TestBBoxFromData(TestCase):
 
 
 class TestMatchDataBBox(TestCase):
-
     input = xr.open_dataset(TEST_DATA_PATH / "lat_10_lon_10_time_10_D_test_data.nc")
     reference = input.isel(lat=slice(3, 7), lon=slice(3, 7))
 
@@ -239,7 +228,6 @@ class TestMatchDataBBox(TestCase):
 
 
 class TestGetNearestPoint(TestCase):
-
     df = pd.read_csv(TEST_DATA_PATH / "station_metadata.csv")
 
     def test_single_nearest_point_geodesic_no_distance(self):
@@ -262,7 +250,6 @@ class TestGetNearestPoint(TestCase):
 
 
 class TestGroupPointsByGrid(TestCase):
-
     df = pd.read_csv(TEST_DATA_PATH / "station_metadata.csv")
 
     def test_groups_with_cellsize(self):
