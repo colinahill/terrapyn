@@ -80,7 +80,7 @@ class TestGetDataAtCoords(TestCase):
         data = self.ds.isel(time=0).drop_vars("time")
         df = tp.space.get_data_at_coords(data, lats=self.lats, lons=self.lons, method="nearest")
         self.assertEqual(df.index.name, "id")
-        np.testing.assert_almost_equal(df["var"].values, np.array([5.64768854, 4.53427025]))
+        np.testing.assert_almost_equal(df["var"].values, np.array([5.6476885381006925, 4.5342702464297435]))
 
 
 class TestBBox(TestCase):
