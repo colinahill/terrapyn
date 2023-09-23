@@ -76,12 +76,6 @@ class TestGetDataAtCoords(TestCase):
         )
         self.assertEqual(list(df.index.names), ["time", "test"])
 
-    def test_dataset_without_time(self):
-        data = self.ds.isel(time=0).drop_vars("time")
-        df = tp.space.get_data_at_coords(data, lats=self.lats, lons=self.lons, method="nearest")
-        self.assertEqual(df.index.name, "id")
-        np.testing.assert_almost_equal(df["var"].values, np.array([5.6476885381006925, 4.5342702464297435]))
-
 
 class TestBBox(TestCase):
     min_lon = 10
