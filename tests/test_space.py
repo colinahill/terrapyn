@@ -172,7 +172,7 @@ class TestPointsInRadius(TestCase):
 class TestGenerateGrid(TestCase):
     def test_filled_dataset(self):
         ds = tp.space.generate_grid(fill_value=1, return_dataset=True, resolution=0.5)
-        result = ", ".join(f"{i} {j}" for i, j in ds.dims.items())
+        result = ", ".join(f"{i} {j}" for i, j in ds.sizes.items())
         expected = "lat 361, lon 721"
         self.assertEqual(result, expected)
         self.assertEqual(ds["var"].isel(lat=10, lon=10).item(), 1)

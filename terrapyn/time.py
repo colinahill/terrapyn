@@ -854,10 +854,10 @@ def groupby_freq(
     Example: xr.Dataset / pd.DataFrame group by month
         >>> ds = xr.Dataset(data_vars={"var": (("lat", "lon", "time"), np.ones((1, 1, 100)))},
         ... coords={"lat": [1], "lon": [2], "time": pd.date_range("2022-01-01", periods=100)})
-        >>> groupby_freq(ds, freq="M")
+        >>> groupby_freq(ds, freq="ME")
         DatasetResample, grouped over '__resample_dim__'
         4 groups with labels 2022-01-31, ..., 2022-04-30.
-        >>> groupby_freq(ds['var'].to_dataframe(), freq="M").sum()  # doctest: +NORMALIZE_WHITESPACE
+        >>> groupby_freq(ds['var'].to_dataframe(), freq="ME").sum()  # doctest: +NORMALIZE_WHITESPACE
                              var
         time       lat lon
         2022-01-31 1   2    30.0
@@ -866,14 +866,15 @@ def groupby_freq(
         2022-04-30 1   2    11.0
     """
     # The offset in hours to apply to the data to account for the day start hour
-    offset = dt.timedelta(hours=day_start_hour)
+    offset = pd.Timedelta(hours=day_start_hour)
 
     if isinstance(data, (xr.DataArray, xr.Dataset)):
         # Bug with xarray.Dataset.resample where it ignores the `base` argument, so a workaround is
         # implemented here, where the times are modified and `loffset` is used to re-label the time
-        return _set_time_in_data(data, time_dim=time_dim, hours_to_subtract=day_start_hour).resample(
-            {time_dim: freq}, loffset=str(day_start_hour) + "H", closed=closed
-        )
+        # return _set_time_in_data(data, time_dim=time_dim, hours_to_subtract=day_start_hour).resample(
+        #     {time_dim: freq}, loffset=str(day_start_hour) + "H", closed=closed
+        # )
+        return data.resample({time_dim: freq}, offset=offset, closed=closed)
 
     elif isinstance(data, (pd.Series, pd.DataFrame)):
         is_dim_in_index = tp.utils._dim_in_pandas_index(data.index, time_dim)
