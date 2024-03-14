@@ -143,8 +143,8 @@ def pandas_to_geopandas(
     Returns:
         Geopandas GeoDataFrame
     """
-    gdf = gpd.GeoDataFrame(df, *args, **kwargs)
-    gdf["geometry"] = gpd.points_from_xy(gdf[lon_col], gdf[lat_col], crs=crs)
+    geometry = gpd.points_from_xy(df[lon_col], df[lat_col], crs=crs)
+    gdf = gpd.GeoDataFrame(df, geometry=geometry, *args, **kwargs)
     return gdf
 
 

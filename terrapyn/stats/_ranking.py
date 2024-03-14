@@ -50,12 +50,12 @@ def calculate_quantiles(
 
     if isinstance(data, (xr.Dataset, xr.DataArray)):
         if isinstance(data, xr.DataArray):
-            quantiles = data.quantile(q=q, dim=dim, interpolation=interpolation, keep_attrs=keep_attrs, skipna=skipna)
+            quantiles = data.quantile(q=q, dim=dim, method=interpolation, keep_attrs=keep_attrs, skipna=skipna)
         else:
             quantiles = data.quantile(
                 q=q,
                 dim=dim,
-                interpolation=interpolation,
+                method=interpolation,
                 keep_attrs=keep_attrs,
                 numeric_only=numeric_only,
                 skipna=skipna,

@@ -442,7 +442,7 @@ class TestSetTimeInData(unittest.TestCase):
 
 class TestUTCOffsetInHours(unittest.TestCase):
     def test_datetimeindex_no_timezone(self):
-        result = tp.time.utc_offset_in_hours(pd.date_range("2019-01-02", freq="6H", periods=2), "Asia/Kolkata")
+        result = tp.time.utc_offset_in_hours(pd.date_range("2019-01-02", freq="6h", periods=2), "Asia/Kolkata")
         self.assertEqual(result, 5.5)
 
     def test_datetime_no_timezone(self):
@@ -451,13 +451,13 @@ class TestUTCOffsetInHours(unittest.TestCase):
 
     def test_datetimeindex_timezone_set(self):
         result = tp.time.utc_offset_in_hours(
-            pd.date_range("2019-01-02", freq="6H", periods=2, tz="CET"), "Asia/Kolkata"
+            pd.date_range("2019-01-02", freq="6h", periods=2, tz="CET"), "Asia/Kolkata"
         )
         self.assertEqual(result, 5.5)
 
     def test_datetimeindex_return_multiple_offsets(self):
         result = tp.time.utc_offset_in_hours(
-            pd.date_range("2019-01-02", freq="6H", periods=2), "Asia/Kolkata", return_single_value=False
+            pd.date_range("2019-01-02", freq="6h", periods=2), "Asia/Kolkata", return_single_value=False
         )
         self.assertEqual(result, [5.5, 5.5])
 
@@ -479,22 +479,22 @@ class TestGroupbyFreq(unittest.TestCase):
     )
 
     def test_dataset(self):
-        result = tp.time.groupby_freq(self.ds, freq="M").sum()["var"].values.flatten()
+        result = tp.time.groupby_freq(self.ds, freq="ME").sum()["var"].values.flatten()
         expected = np.array([30.0, 28.0, 31.0, 11.0])
         np.testing.assert_array_equal(result, expected)
 
     def test_dataarray(self):
-        result = tp.time.groupby_freq(self.ds["var"], freq="M").sum().values.flatten()
+        result = tp.time.groupby_freq(self.ds["var"], freq="ME").sum().values.flatten()
         expected = np.array([30.0, 28.0, 31.0, 11.0])
         np.testing.assert_array_equal(result, expected)
 
     def test_dataframe(self):
-        result = tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="M").sum()["var"].values
+        result = tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="ME").sum()["var"].values
         expected = np.array([30.0, 28.0, 31.0, 11.0])
         np.testing.assert_array_equal(result, expected)
 
     def test_series(self):
-        result = tp.time.groupby_freq(self.ds["var"].to_series(), freq="M").sum().values
+        result = tp.time.groupby_freq(self.ds["var"].to_series(), freq="ME").sum().values
         expected = np.array([30.0, 28.0, 31.0, 11.0])
         np.testing.assert_array_equal(result, expected)
 
@@ -519,15 +519,15 @@ class TestGroupbyFreq(unittest.TestCase):
 
     def test_dataframe_no_time_dim(self):
         with self.assertRaises(ValueError):
-            tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="M", time_dim="x")
+            tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="ME", time_dim="x")
 
     def test_series_no_time_dim(self):
         with self.assertRaises(ValueError):
-            tp.time.groupby_freq(self.ds["var"].to_series(), freq="M", time_dim="x")
+            tp.time.groupby_freq(self.ds["var"].to_series(), freq="ME", time_dim="x")
 
     def test_dataframe_time_column(self):
         result = (
-            tp.time.groupby_freq(self.ds["var"].to_dataframe().reset_index(drop=False), freq="M").sum()["var"].values
+            tp.time.groupby_freq(self.ds["var"].to_dataframe().reset_index(drop=False), freq="ME").sum()["var"].values
         )
         expected = np.array([30.0, 28.0, 31.0, 11.0])
         np.testing.assert_array_equal(result, expected)
