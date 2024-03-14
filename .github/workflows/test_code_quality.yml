@@ -3,7 +3,7 @@ name: Test Code Quality
 on:
   push:
   pull_request:
-    branches: [main, development]
+    branches: [development]
 
 jobs:
   build:
