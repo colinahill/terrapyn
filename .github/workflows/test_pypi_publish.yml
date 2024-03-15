@@ -3,7 +3,6 @@ name: Publish to Test PyPI
 on:
   release:
     types: [prereleased]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -26,4 +25,4 @@ jobs:
       - name: Publish package
         run: |
           poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry publish -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_API_TOKEN }}
+          poetry publish -r testpypi -u __token__ -p ${{ secrets.TEST_PYPI_API_KEY }}
