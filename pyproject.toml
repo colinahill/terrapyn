@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "terrapyn"
-version = "0.1.0"
+version = "0.1.1"
 description="Toolkit to manipulate Earth observations and models."
 authors = ["colinahill <colinalastairhill@gmail.com>"]
 readme = "README.md"

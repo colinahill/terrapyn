@@ -3,7 +3,6 @@ name: Publish to PyPI
 on:
   release:
     types: [created]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -12,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Set up Python
           uses: actions/setup-python@v4
           with:
@@ -25,5 +24,4 @@ jobs:
           run: poetry build
         - name: Publish package
           run: |
-            poetry config pypi-token.pypi ${{ secrets.TEST_PYPI_API_TOKEN }}
-            poetry publish
+            poetry publish -u __token__ -p ${{ secrets.PYPI_API_KEY }}

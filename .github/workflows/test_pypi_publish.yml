@@ -3,15 +3,15 @@ name: Publish to Test PyPI
 on:
   release:
     types: [prereleased]
+  workflow_dispatch:
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@main
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
@@ -24,5 +24,5 @@ jobs:
         run: poetry build
       - name: Publish package
         run: |
-          poetry config pypi-token.pypi ${{ secrets.TEST_PYPI_API_TOKEN }}
-          poetry publish -r testpypi
+          poetry config repositories.test-pypi https://test.pypi.org/legacy/
+          poetry publish -r test-pypi -u __token__ -p ${{ secrets.TEST_PYPI_API_KEY }}
