@@ -1,0 +1,1 @@
+{"config":{"lang":["en"],"separator":"[\\s\\-]+","pipeline":["stopWordFilter"]},"docs":[{"location":"","title":"terrapyn","text":"<p>Toolkit to manipulate Earth observations and models.</p>"}]}
