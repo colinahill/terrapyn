@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest import TestCase
 
 import geopandas as gpd
@@ -8,9 +7,7 @@ import shapely
 import xarray as xr
 
 import terrapyn as tp
-
-PACKAGE_ROOT_DIR = Path(__file__).resolve().parent.parent
-TEST_DATA_PATH = PACKAGE_ROOT_DIR / "tests" / "data"
+from terrapyn import TEST_DATA_DIR
 
 
 class TestGetDataAtCoords(TestCase):
@@ -146,7 +143,7 @@ class TestCropToBBox(TestCase):
         np.testing.assert_equal(results, expected)
 
     def test_xarray_dataset(self):
-        ds = xr.open_dataset(TEST_DATA_PATH / "lat_10_lon_10_time_10_D_test_data.nc")
+        ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
         bbox = tp.space.BBox(min_lat=3.3, max_lat=5.7, min_lon=12.3, max_lon=14.4)
         results = tp.space.crop_to_bbox(ds, bbox=bbox)["var"].values
         expected = np.array(
@@ -159,7 +156,7 @@ class TestCropToBBox(TestCase):
 
 
 class TestPointsInRadius(TestCase):
-    df = pd.read_csv(TEST_DATA_PATH / "station_metadata.csv")
+    df = pd.read_csv(TEST_DATA_DIR / "station_metadata.csv")
 
     def test_points_and_distance(self):
         result = tp.space.points_within_radius(self.df, point=[43.5, 1.2], radius_km=10, return_distance=True)
@@ -189,7 +186,7 @@ class TestGenerateGrid(TestCase):
 
 
 class TestBBoxFromData(TestCase):
-    ds = xr.open_dataset(TEST_DATA_PATH / "lat_10_lon_10_time_10_D_test_data.nc")
+    ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
 
     def test_dataset(self):
         bbox = tp.space.bbox_from_data(self.ds)
@@ -207,7 +204,7 @@ class TestBBoxFromData(TestCase):
 
 
 class TestMatchDataBBox(TestCase):
-    input = xr.open_dataset(TEST_DATA_PATH / "lat_10_lon_10_time_10_D_test_data.nc")
+    input = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
     reference = input.isel(lat=slice(3, 7), lon=slice(3, 7))
 
     def test_dataset_and_dataset(self):
@@ -228,7 +225,7 @@ class TestMatchDataBBox(TestCase):
 
 
 class TestGetNearestPoint(TestCase):
-    df = pd.read_csv(TEST_DATA_PATH / "station_metadata.csv")
+    df = pd.read_csv(TEST_DATA_DIR / "station_metadata.csv")
 
     def test_single_nearest_point_geodesic_no_distance(self):
         result = tp.space.get_nearest_point(self.df, lats=43.44, lons=1.23, return_distance=False)
@@ -250,7 +247,7 @@ class TestGetNearestPoint(TestCase):
 
 
 class TestGroupPointsByGrid(TestCase):
-    df = pd.read_csv(TEST_DATA_PATH / "station_metadata.csv")
+    df = pd.read_csv(TEST_DATA_DIR / "station_metadata.csv")
 
     def test_groups_with_cellsize(self):
         groups, lat_bounds, lon_bounds = tp.space.group_points_by_grid(self.df, cellsize=0.5)

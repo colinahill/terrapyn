@@ -24,6 +24,14 @@ def split_into_chunks(a: T.Iterable = None, n: int = 2, axis: int = 0) -> np.nda
     return np.split(a, range(n, len(a), n), axis=axis)
 
 
+def split_number_into_parts(a: int = None, b: int = None):
+    """
+    Split an integer `a` into a list of `b` integer parts, where
+    the values are as equal as possible while remaining whole numbers.
+    """
+    return [a // b + 1] * (a % b) + [a // b] * (b - a % b)
+
+
 def set_dim_values_in_data(
     data: T.Union[
         xr.Dataset,
@@ -166,8 +174,12 @@ def _dim_in_pandas_index(index, dim):
 
 
 def ensure_list(a: T.Any = None) -> T.List[T.Any]:
-    """Ensure data `a` is a list and cast if required"""
-    if isinstance(a, list):
+    """
+    Ensure data `a` is a list if not None
+    """
+    if a is None:
+        return None
+    elif isinstance(a, list):
         return a
     elif isinstance(a, (str, int, float)):
         return [a]
@@ -200,3 +212,18 @@ def remove_list_elements(input_list: T.List = None, remove_list: T.List = None) 
 
     else:
         raise ValueError("both `input_list` and `remove_list` must be provided")
+
+
+def get_key_for_value_in_dict(dictionary: dict, value):
+    """Get the key for a value in a dictionary"""
+    return list(dictionary.keys())[list(dictionary.values()).index(value)]
+
+
+def get_first_dictionary_value(dictionary: dict):
+    """Get the first value in a dictionary"""
+    return next(iter(dictionary.values()))
+
+
+def get_indexes_of_items_in_list(input_list: T.List = None, items: T.List = None) -> T.List[int]:
+    """Get the (first) index of each item in `items` in the list `input_list`"""
+    return [input_list.index(item) for item in items]
