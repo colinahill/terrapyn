@@ -197,7 +197,9 @@ def get_data_at_coords(
         index_coords_to_reset = list(points.index.names.difference([time_dim, point_names_dim]))
         if len(index_coords_to_reset) > 0:
             points = points.reset_index(index_coords_to_reset)
+
         if time_dim in points.index.names:
+            # Make sure time is the first index
             dim_order = [time_dim, point_names_dim]
             points.index = points.index.reorder_levels(dim_order)
         else:

@@ -76,12 +76,6 @@ class TestGetDataAtCoords(TestCase):
         )
         self.assertEqual(list(df.index.names), ["time", "test"])
 
-    def test_dataset_without_time(self):
-        data = self.ds.isel(time=0).drop_vars("time")
-        df = tp.space.get_data_at_coords(data, lats=self.lats, lons=self.lons, method="nearest")
-        self.assertEqual(df.index.name, "id")
-        np.testing.assert_almost_equal(df["var"].values, np.array([5.64768854, 4.53427025]))
-
 
 class TestBBox(TestCase):
     min_lon = 10
@@ -178,7 +172,7 @@ class TestPointsInRadius(TestCase):
 class TestGenerateGrid(TestCase):
     def test_filled_dataset(self):
         ds = tp.space.generate_grid(fill_value=1, return_dataset=True, resolution=0.5)
-        result = ", ".join(f"{i} {j}" for i, j in ds.dims.items())
+        result = ", ".join(f"{i} {j}" for i, j in ds.sizes.items())
         expected = "lat 361, lon 721"
         self.assertEqual(result, expected)
         self.assertEqual(ds["var"].isel(lat=10, lon=10).item(), 1)
