@@ -1,7 +1,6 @@
 import datetime as dt
 import unittest
 import zoneinfo
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -10,9 +9,7 @@ import xarray as xr
 from freezegun import freeze_time
 
 import terrapyn as tp
-
-PACKAGE_ROOT_DIR = Path(__file__).resolve().parent.parent
-TEST_DATA_PATH = PACKAGE_ROOT_DIR / "tests" / "data"
+from terrapyn import TEST_DATA_DIR
 
 idx = pd.IndexSlice
 
@@ -95,7 +92,7 @@ class TestGetTimeFromData(unittest.TestCase):
 
 
 class TestGroupbyTime(unittest.TestCase):
-    ds = xr.open_dataset(TEST_DATA_PATH / "lat_2_lon_2_time_15_D_test_data.nc")
+    ds = xr.open_dataset(TEST_DATA_DIR / "lat_2_lon_2_time_15_D_test_data.nc")
 
     def test_dataset_groupby_week(self):
         result = tp.time.groupby_time(self.ds, grouping="week")
@@ -190,7 +187,7 @@ class TestMonthlyDateRange(unittest.TestCase):
 
 
 class TestAddDayOfYearVariable(unittest.TestCase):
-    ds = xr.open_dataset(TEST_DATA_PATH / "lat_2_lon_2_time_366_D_test_data.nc")
+    ds = xr.open_dataset(TEST_DATA_DIR / "lat_2_lon_2_time_366_D_test_data.nc")
 
     def test_dataset_modify_ordinal_days(self):
         result = tp.time.add_day_of_year_variable(self.ds)
@@ -240,7 +237,7 @@ class TestCheckStartEndTimeValidity(unittest.TestCase):
 
 
 class TestGetDayOfYear(unittest.TestCase):
-    ds = xr.open_dataset(TEST_DATA_PATH / "lat_2_lon_2_time_366_D_test_data.nc")
+    ds = xr.open_dataset(TEST_DATA_DIR / "lat_2_lon_2_time_366_D_test_data.nc")
 
     def test_dataset_ordinal_days(self):
         result = tp.time.get_day_of_year(self.ds, modify_ordinal_days=False)[58:62]

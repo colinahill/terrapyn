@@ -25,6 +25,9 @@ fiona = "^1.9.0"
 tqdm = "^4.66.0"
 jupyterlab = "^4.1"
 rioxarray = "^0.15"
+earthengine-api = "^0.1.394"
+polygon-geohasher = "^0.0.1"
+geemap = "^0.32.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3"
