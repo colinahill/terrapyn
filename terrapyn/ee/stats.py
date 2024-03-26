@@ -236,11 +236,13 @@ def weighted_mean(img, weight_dict, output_bandname="mean"):
     return tp.ee.utils.scale_image_bands(img, weight_dict=weights_dict).reduce("sum").rename(output_bandname)
 
 
-def _horizon_weights(horizon_top, horizon_bottom, topsoil_depth=30):
-    """calculate horizon weight based on depth range overlap"""
+def _layer_weights(layer_tops: T.Iterable, layer_bottoms: T.Iterable, total_depth: float = 30) -> T.List:
+    """
+    Calculate a weighting for each layer based on thickness and range overlap, typically used for soil horizons
+    """
     weights = []
-    for top, bottom in zip(horizon_top, horizon_bottom):
-        overlap = min(topsoil_depth, bottom) - max(0, top)
+    for top, bottom in zip(layer_tops, layer_bottoms):
+        overlap = min(total_depth, bottom) - max(0, top)
         # if depth range doesn't overlap, weight = 0
         weights.append(overlap if overlap > 0 else 0)
     return weights
