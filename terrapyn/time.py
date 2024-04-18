@@ -838,7 +838,7 @@ def groupby_freq(
     other_grouping_columns: list = None,
 ):
     """
-    Resample data in time.
+    Group data by time.
 
     Args:
         data: Data to resample in time
@@ -990,6 +990,94 @@ def rolling(
         raise TypeError("data must be of type pd.Series or xr.DataArray")
 
     return tp.utils._call_resample_method(rolling_data, method, dim=time_dim)
+
+
+def disaggregate_to_daily(
+    data: pd.DataFrame = None,
+    time_dim: str = "time",
+    n_days_in_period: int = 8,
+    agg_type: str = "sum",
+    normalize_year_end: bool = True,
+) -> pd.DataFrame:
+    """
+    Dissaggregate data with multi-day period (e.g. 8-day, 16-day) to daily values.
+
+    If `agg_type=='sum'` then the values are divided by the number of days in each period, to give
+    the mean daily value. If `agg_type=='mean'` then the values are duplicated for each day in the period.
+
+    Optionally takes care of incomplete periods at the end of a calendar year and normalizes data using
+    however many days are in that incomplete period. e.g. for 8-day periods where the 'date' is the start
+    of the 8 day period, the last period of each year covers 5 or 6 days. For daily values, the data are
+    normalized by 8 days apart from the last periods in the year which are normalized by 5 or 6 days.
+
+    Args:
+        data: Input data
+        n_days_in_period: Number of days in period
+        agg_type: Type of aggregation used in creating the input data. Options are 'sum', 'mean'.
+        This determines how the values are normalized (divided or duplicated).
+        normalize_year_end: If True, normalize the last period of each year by the number of days in the period
+
+    Returns:
+        pd.DataFrame with index of 'date' and values resampled to daily values
+    """
+    # Extract/Convert the `time_dim` to a pandas.DatetimeIndex
+    times = get_time_from_data(data, time_dim=time_dim)
+
+    # Daily date range from period start date to period end date + n_days_in_period
+    # unless end date is in last period of year, then end of year
+    start = times[0]
+    end = times[-1]
+    if (end.month == 12) & (31 - end.day < n_days_in_period):
+        end = pd.Timestamp(year=end.year, month=12, day=31)
+        fill_until_year_end = True
+    else:
+        end = end + pd.Timedelta(n_days_in_period - 1, unit="D")
+        fill_until_year_end = False
+
+    daily = pd.date_range(start, end, freq="D")
+
+    orig_daily = data.reindex(index=daily, method="ffill").copy()
+
+    if agg_type == "sum":
+        if normalize_year_end:
+            # Divide all values by n_days_in_period apart from last period in year
+            # unless fill_until_year_end == False, then just divide last day by n_days_in_period
+            factor = pd.Series(data=n_days_in_period, index=times)
+
+            if fill_until_year_end:
+                # how many days until end of year for each of these dates
+                end_of_year_dates = factor.index[
+                    (factor.index.month == 12) & (31 - factor.index.day < n_days_in_period)
+                ]
+                end_of_year_factors = [
+                    (366 - date.day_of_year + 1) if date.is_leap_year else (365 - date.day_of_year + 1)
+                    for date in end_of_year_dates
+                ]
+                factor[end_of_year_dates] = end_of_year_factors
+
+            factor_daily = factor.reindex(index=daily, method="ffill")
+            orig_daily = orig_daily.div(factor_daily, axis=0)
+        else:
+            # divide all by n_days_in_period
+            orig_daily = orig_daily.div(n_days_in_period)
+
+    return orig_daily
+
+
+def test_disaggregate_to_daily():
+    """
+    Test disaggregate_to_daily
+    """
+    # Create a dataframe with 8-day period data
+    dates = pd.date_range("2022-01-01", freq="8D", periods=2, name="time")
+    data = pd.DataFrame({"data": np.full(len(dates), 8)}, index=dates)
+
+    disaggregated = disaggregate_to_daily(data, n_days_in_period=8, agg_type="sum", normalize_year_end=True)
+
+    daily_dates = pd.date_range("2022-01-01", freq="D", periods=16, name="time")
+    expected = pd.Series(index=daily_dates, data=np.full(len(daily_dates), 1.0))
+
+    assert disaggregated["data"].equals(expected)
 
 
 ################################################

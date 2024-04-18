@@ -1,3 +1,3 @@
-from . import etp, solar
+from . import etp, soil, solar
 
-__all__ = ["solar", "etp"]
+__all__ = ["solar", "etp", "soil"]

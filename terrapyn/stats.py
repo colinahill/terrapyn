@@ -1,9 +1,14 @@
 import typing as T
+from math import ceil
 
 import bottleneck as bn
 import numpy as np
 import pandas as pd
 import xarray as xr
+from scipy.spatial.distance import jensenshannon
+from scipy.special import rel_entr
+
+from terrapyn.logger import logger
 
 
 def _return_sorted_array(values: T.Union[float, int, np.ndarray, T.List]) -> np.ndarray:
@@ -377,3 +382,202 @@ def normalize_weights(weights: T.Iterable) -> T.List:
     Normalize a list of weights so they sum to 1
     """
     return [i / sum(weights) for i in weights]
+
+
+def min_max_of_arrays(a: T.Iterable, b: T.Iterable) -> T.Tuple:
+    """
+    Return a tuple of the minimum and maximum of two 1-D arrays
+    """
+    low = np.min([np.min(a), np.min(b)])
+    upp = np.max([np.max(a), np.max(b)])
+    return low, upp
+
+
+def is_mirror(a: np.array, b: np.array) -> bool:
+    """
+    Check if array `b` is a mirror of array `a`, i.e. where the values at the same index are switched
+    e.g. [1, 5, 1] and [5, 1, 5] are mirrors of each other. This only works for arrays with 2 unique values.
+
+    Args:
+        a: Reference array
+        b: Comparison array
+
+    Returns:
+        True if `b` is a mirror of `a`, False otherwise
+
+    Examples:
+        >>> is_mirror(np.array([1,5,1]), np.array([5,1,5]))
+        True
+        >>> is_mirror(np.array([1,5,5]), np.array([5,5,1]))
+        False
+        >>> is_mirror(np.array([1,2,3]), np.array([3,2,1]))
+        False
+        >>> is_mirror(np.array([1,2,1,3]), np.array([2,1,3,1]))
+        False
+
+    """
+    s = set(b)
+    if len(s) > 2:
+        logger.warning(f"Only 2 unique values are allowed in arrays, these values {s} were given")
+        return False
+    s = np.array(list(s))
+    index = np.digitize(b, s, right=True)
+    b_mirrored = s[::-1][index]
+    return np.all(a == b_mirrored)
+
+
+def find_and_count_sequences(a: np.array) -> T.Tuple[np.array, int, bool]:
+    """
+    Find sequences in array `a` and count the number of times they occur.
+    Allows for incomplete sequences which are flagged, not counted.
+
+    Args:
+        a: Array of integers
+
+    Returns:
+        Tuple of (sequence [array of int], number of complete sequences [int], if an incomplete sequence exists [bool])
+
+    Examples:
+        >>> find_and_count_sequences(np.array([1,2,1,2]))
+        (array([1, 2]), 2, False)
+        >>> find_and_count_sequences(np.array([1,2,3,1,2,3]))
+        (array([1, 2, 3]), 2, False)
+        >>> find_and_count_sequences(np.array([1,2,3,1,2]))
+        (array([1, 2, 3]), 1, True)
+        >>> find_and_count_sequences(np.array([2,3,1,2,3]))
+        (array([2, 3, 1]), 1, True)
+        >>> find_and_count_sequences(np.array([1,1,1]))
+        (array([1]), 3, False)
+        >>> find_and_count_sequences(np.array([1,2]))
+        (array([1, 2]), 1, False)
+        >>> find_and_count_sequences(np.array([1,2,3,4,5]))
+        (array([1, 2, 3, 4, 5]), 1, False)
+        >>> find_and_count_sequences(np.array([1,2,1,3,1,2]))
+        (array([1, 2, 1, 3]), 1, True)
+        >>> find_and_count_sequences(np.array([1,2,2,1,2,2]))
+        (array([1, 2, 2]), 2, False)
+        >>> find_and_count_sequences(np.array([2,2,1,2,2]))
+        (array([2, 2, 1]), 1, True)
+        >>> find_and_count_sequences(np.array([1,2,2,1,2,2,1]))
+        (array([1, 2, 2]), 2, True)
+        >>> find_and_count_sequences(np.array([3,4,1,2,3,4,1]))
+        (array([3, 4, 1, 2]), 1, True)
+        >>> find_and_count_sequences(np.array([1,2,3,1,1,2,3]))
+        (array([1, 2, 3, 1]), 1, True)
+        >>> find_and_count_sequences(np.array([1,2,3,4,5,1,2,3]))
+        (array([1, 2, 3, 4, 5]), 1, True)
+        >>> find_and_count_sequences(np.array([1,2,1]))
+        (array([1, 2]), 1, True)
+    """
+    size_a = len(a)
+
+    # Size of sequence
+    for size_s in range(1, size_a + 1):
+        # Test sequence
+        seq = a[0:size_s]
+
+        n_complete = size_a // size_s  # number of potential complete sequences
+        n_end = size_a % size_s  # number of extra elements at end of array that may be an incomplete part of a sequence
+
+        # Check if sequence is repeated with spacing of size_s
+        seq_repeated = np.array_equal(np.tile(seq, n_complete), a[: size_s * n_complete])
+
+        if n_end > 0:  # sequence does not exactly divide array and we have extra elements at end of array
+            # check if last elements of array are equal to first elements of seq
+            last_equal = np.array_equal(a[-n_end:], seq[:n_end])
+
+            if seq_repeated and last_equal:
+                return (seq, n_complete, True)
+
+        else:  # sequence exactly divides array
+            if seq_repeated:
+                return (seq, n_complete, False)
+
+    # Otherwise print warning that algorithm failed
+    logger.warning(f"Algorithm failed for array {a}")
+    return (None, None, None)
+
+
+def is_rolled(a: np.array, b: np.array, return_shift: bool = False):
+    """
+    Check if array `b` is a rolled version of array `a`, where the values are shifted by
+    up to (len(b) - 1) steps and filled in from the start of the array.
+
+    Args:
+        a: Array of integers
+        b: Array of integers
+
+    Returns:
+        Tuple of (bool, int) where bool is True if b is a rolled version
+        of a, False otherwise, and int is the number of steps.
+
+    Examples:
+        >>> is_rolled(np.array([1,2,3]), np.array([2,3,1]), return_shift=True)
+        (True, 2)
+        >>> is_rolled(np.array([2,3,1]), np.array([1,2,3]))
+        True
+        >>> is_rolled(np.array([1,2,3,1]), np.array([1,2,3,1]), return_shift=True)
+        (True, 0)
+        >>> is_rolled(np.array([1,2,1]), np.array([2,1,2]), return_shift=True)
+        (False, None)
+        >>> is_rolled(np.array([1,2,1,3]), np.array([2,1,2,3]), return_shift=True)
+        (False, None)
+    """
+    assert len(a) == len(b), "Arrays must be of equal length"
+
+    for i in range(len(a)):
+        a_shifted = np.roll(a, shift=i)
+        if np.array_equal(a_shifted, b):
+            if return_shift:
+                return True, i
+            return True
+
+    if return_shift:
+        return False, None
+    return False
+
+
+def kl_div(p_freq, q_freq):
+    """
+    Calculate the KL Divergence (P || Q)
+    """
+    return np.ma.masked_invalid(rel_entr(p_freq, q_freq)).sum()
+
+
+def js_div(p_freq, q_freq):
+    """
+    Calculate the Jensen-Shannon Divergence
+    """
+    return jensenshannon(p_freq, q_freq, base=2) ** 2
+
+
+def freq_bin(p, q):
+    """
+    Calculate the normalized frequency of values in p and q, where values are binned into a common set of bins.
+
+    Args:
+        p: test data
+        q: reference data
+
+    Returns:
+        Arrays of bins, p_freq, q_freq, where p_freq and q_freq are normalized frequencies
+    """
+    # Find min and max of both distributions
+    low, upp = min_max_of_arrays(p, q)
+
+    # size of each array
+    size_q = len(q)
+    size_p = len(p)
+
+    # Set range to use for binning
+    n_bins = ceil(2 * size_q ** (1 / 3))
+    bins = np.linspace(low, upp, n_bins)
+
+    # compute histogram and normalize (so sum equals 1)
+    q_count, _ = np.histogram(q, bins=bins)
+    q_freq = q_count / size_q
+
+    p_count, _ = np.histogram(p, bins=bins)
+    p_freq = p_count / size_p
+
+    return bins, p_freq, q_freq

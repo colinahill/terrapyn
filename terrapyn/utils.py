@@ -227,3 +227,8 @@ def get_first_dictionary_value(dictionary: dict):
 def get_indexes_of_items_in_list(input_list: T.List = None, items: T.List = None) -> T.List[int]:
     """Get the (first) index of each item in `items` in the list `input_list`"""
     return [input_list.index(item) for item in items]
+
+
+def utf8_len(s: str) -> int:
+    """Calculate the size of a string in bytes."""
+    return len(s.encode("utf-8"))

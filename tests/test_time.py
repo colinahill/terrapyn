@@ -572,3 +572,19 @@ class TestResampleTime(unittest.TestCase):
     def test_method_not_implemented(self):
         with self.assertRaises(ValueError):
             tp.time.resample_time(self.ds_hourly, resample_method="foobar")
+
+
+def test_disaggregate_to_daily():
+    """
+    Test disaggregate_to_daily
+    """
+    # Create a dataframe with 8-day period data
+    dates = pd.date_range("2022-01-01", freq="8D", periods=2, name="time")
+    data = pd.DataFrame({"data": np.full(len(dates), 8)}, index=dates)
+
+    disaggregated = tp.time.disaggregate_to_daily(data, n_days_in_period=8, agg_type="sum", normalize_year_end=True)
+
+    daily_dates = pd.date_range("2022-01-01", freq="D", periods=16, name="time")
+    expected = pd.Series(index=daily_dates, data=np.full(len(daily_dates), 1.0))
+
+    assert disaggregated["data"].equals(expected)
