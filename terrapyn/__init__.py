@@ -1,5 +1,5 @@
 from . import (
-    bigquery,
+    bq,
     conversion,
     dask_utils,
     ee,
@@ -27,7 +27,7 @@ __all__ = [
     "io",
     "ee",
     "logger",
-    "bigquery",
+    "bq",
 ]
 __version__ = "0.1.1"
 
