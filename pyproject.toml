@@ -53,7 +53,8 @@ line-length = 120
 profile = 'black'
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes"
+# Ignore earth engine directory 'ee'
+addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=ee"
 
 [build-system]
 requires = ["poetry-core"]
