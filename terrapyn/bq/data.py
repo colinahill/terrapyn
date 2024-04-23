@@ -118,7 +118,7 @@ class NOAA_GSOD:
                 where lat != 0 and lon != 0
             )
             select * from stations
-            where ((start_date between @start and @end) or (end_date between @start and @end))
+            where start_date <= @end and end_date >= @start
             and st_intersects(geom, st_geogfromgeojson(@geometry_string, make_valid => True))
             """
 
@@ -269,7 +269,7 @@ class NOAA_GHCN:
                 using(id)
             )
             select * from stations
-            where ((start_date between @start and @end) or (end_date between @start and @end))
+            where start_date <= @end and end_date >= @start
             and st_intersects(geom, st_geogfromgeojson(@geometry_string, make_valid => True))
             """
 
