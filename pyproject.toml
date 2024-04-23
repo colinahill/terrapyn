@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "terrapyn"
-version = "0.1.2"
+version = "0.1.4"
 description="Toolkit to manipulate Earth observations and models."
 authors = ["colinahill <colinalastairhill@gmail.com>"]
 readme = "README.md"
@@ -54,7 +54,7 @@ profile = 'black'
 
 [tool.pytest.ini_options]
 # Ignore earth engine directory 'ee'
-addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=ee"
+addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=terrapyn/ee"
 
 [build-system]
 requires = ["poetry-core"]
