@@ -31,6 +31,21 @@ def reduce_regions(
         return None
 
     band_names = image_collection.first().bandNames().getInfo()
+    reducer_names = reducer.getOutputs().getInfo()
+
+    if len(band_names) == 1:
+        if len(reducer_names) == 1:
+            reducer = reducer.setOutputs(band_names)
+            output_names = band_names
+        elif len(reducer_names) > 1:
+            output_names = [f"{band}_{reducer}" for band in band_names for reducer in reducer_names]
+            reducer = reducer.setOutputs(output_names)
+    else:
+        if len(reducer_names) == 1:
+            output_names = band_names
+        elif len(reducer_names) > 1:
+            output_names = [f"{band}_{reducer}" for band in band_names for reducer in reducer_names]
+            reducer = reducer.setOutputs(output_names)
 
     def img_reduce_regions(img):
         date = ee.Date(img.get(date_property))
@@ -45,7 +60,7 @@ def reduce_regions(
         )
 
         if drop_na:
-            fc = fc.filter(ee.Filter.Or([ee.Filter.neq(key, None) for key in band_names]))
+            fc = fc.filter(ee.Filter.Or([ee.Filter.neq(key, None) for key in output_names]))
 
         return fc.map(lambda f: f.set({"date": date}))
 
