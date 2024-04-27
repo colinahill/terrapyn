@@ -232,3 +232,11 @@ def get_indexes_of_items_in_list(input_list: T.List = None, items: T.List = None
 def utf8_len(s: str) -> int:
     """Calculate the size of a string in bytes."""
     return len(s.encode("utf-8"))
+
+
+def ensure_string(s: T.Union[str, T.Iterable]) -> str:
+    """Accepts a string or an iterable, and returns a string or the first element of the iterable"""
+    if isinstance(s, str):
+        return s
+    elif isinstance(s, T.Iterable):
+        return s[0]

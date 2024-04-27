@@ -1,3 +1,5 @@
+import importlib.metadata
+
 from . import (
     bq,
     conversion,
@@ -7,6 +9,7 @@ from . import (
     io,
     logger,
     params,
+    scoring,
     space,
     stats,
     time,
@@ -28,8 +31,10 @@ __all__ = [
     "ee",
     "logger",
     "bq",
+    "scoring",
 ]
-__version__ = "0.1.1"
+
+__version__ = importlib.metadata.version("terrapyn")
 
 from pathlib import Path
 
