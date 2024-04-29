@@ -635,7 +635,7 @@ def group_points_by_grid(
     Returns:
         pd.Series of groups of points (with integer labels) and a list of points in that group
     """
-    lats, lons = get_lat_lon_from_data(df, lat_name=lat_col, lon_name=lon_col, unique=True)
+    lats, lons = get_lat_lon_from_data(df, lat_name=lat_col, lon_name=lon_col, unique=False)
 
     if lat_bounds is None and lon_bounds is None:
         min_lat, max_lat = lats.min(), lats.max()

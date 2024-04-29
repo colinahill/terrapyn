@@ -18,7 +18,7 @@ jobs:
       - name: Install poetry
         run: pip install poetry
       - name: Install dependencies
-        run: poetry update
+        run: poetry install
       - name: Check style with Ruff
         run: poetry run ruff terrapyn/ tests/ --extend-ignore=D1,D2,D4,TID
       - name: Check format with black
