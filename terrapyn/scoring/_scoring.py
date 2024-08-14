@@ -3,8 +3,7 @@ import typing as T
 import numpy as np
 import pandas as pd
 
-from terrapyn import time
-from terrapyn.scoring import metrics
+import terrapyn as tp
 
 
 def score_df(
@@ -36,31 +35,34 @@ def score_df(
     """
     match metric:
         case "me":
-            return metrics.me_df(
+            return tp.scoring.metrics.me_df(
                 df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
             )
         case "mae":
-            return metrics.mae_df(
+            return tp.scoring.metrics.mae_df(
                 df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
             )
         case "rmse":
-            return metrics.rmse_df(
+            return tp.scoring.metrics.rmse_df(
                 df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
             )
         case "mse":
-            return metrics.mse_df(
+            return tp.scoring.metrics.mse_df(
                 df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
             )
         case "error":
-            return metrics.error_df(
-                df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
+            return tp.scoring.metrics.error_df(
+                df=df,
+                model_name=model_names,
+                obs_name=obs_names,
+                output_index_names=output_index_names,  # axis=axis
             )
         case "bias":
-            return metrics.bias_df(
+            return tp.scoring.metrics.bias_df(
                 df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names
             )
         case "efficiency":
-            return metrics.efficiency_df(
+            return tp.scoring.metrics.efficiency_df(
                 df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names
             )
         case _:
@@ -82,7 +84,7 @@ def grouped_scores(
     groupby_time: bool = True,
     time_dim: str = "time",
     time_grouping: str = "month",
-    other_grouping_keys: T.Union[str, T.List[str]] = ["id"],
+    other_grouping_keys: T.Union[str, T.List[str]] = None,
     min_points: int = None,
     model_names: T.Union[str, T.List[str]] = None,
     obs_names: T.Union[str, T.List[str]] = None,
@@ -116,12 +118,17 @@ def grouped_scores(
     Returns:
         Pandas DataFrame with scores for each group, for each metric, for each combination of model and observation
     """
-    if isinstance(other_grouping_keys, str):
+    if other_grouping_keys is None:
+        # If no other grouping keys are given, only group by time
+        if groupby_time is False:
+            # TODO apply metrics to the whole DataFrame
+            pass
+    elif isinstance(other_grouping_keys, str):
         other_grouping_keys = [other_grouping_keys]
 
     # Check if grouping by time
     if groupby_time:
-        grouped = time.groupby_time(
+        grouped = tp.time.groupby_time(
             df, time_dim=time_dim, grouping=time_grouping, other_grouping_keys=other_grouping_keys
         )
     else:
@@ -133,7 +140,7 @@ def grouped_scores(
         df_min_points = grouped.apply(_set_to_nan_if_fewer_than_min_points, min_points=min_points)
 
         if groupby_time:
-            grouped = time.groupby_time(
+            grouped = tp.time.groupby_time(
                 df_min_points, time_dim=time_dim, grouping=time_grouping, other_grouping_keys=other_grouping_keys
             )
         else:

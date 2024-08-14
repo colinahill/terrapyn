@@ -1,7 +1,13 @@
 import typing as T
 
+import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.metrics import confusion_matrix
+
+import terrapyn as tp
+from terrapyn.logger import logger
 
 
 class ConfusionMatrix:
@@ -68,67 +74,197 @@ class ConfusionMatrix:
         labels_to_include: T.Iterable = None,
     ):
         self.cm = confusion_matrix(truth, prediction, normalize=normalize, labels=labels_to_include)
-        self.TN, self.FP, self.FN, self.TP = self.cm.ravel()
+
+        if labels_to_include is None:
+            # labels are unique values in truth and prediction, sorted.
+            self.labels = list(set(truth).union(set(prediction)))
+        else:
+            self.labels = tp.utils.ensure_list(labels_to_include)
+        self.labels.sort()
+
+        # If the shape of the confusion matrix is 2x2 then the binary statistics are available. If not then 2 labels must
+        # be provided to yield a 2x2 matrix to enable the statistics. Otherwise, only plotting is available.
+        if self.cm.shape == (2, 2):
+            self.TN, self.FP, self.FN, self.TP = self.cm.ravel()
+            self._binary = True
+        else:
+            self.TN, self.FP, self.FN, self.TP = None, None, None, None
+            self._binary = False
 
     def __repr__(self):
-        return f"ConfusionMatrix(TP={self.TP}, FP={self.FP}, " f"FN={self.FN}, TN={self.TN})"
+        if self._binary:
+            return f"ConfusionMatrix(TP={self.TP}, FP={self.FP}, " f"FN={self.FN}, TN={self.TN})"
+        else:
+            return f"ConfusionMatrix(shape={self.cm.shape})"
 
     @property
     def PPV(self):
         """Positive Predictive Value (Precision)"""
-        return self.TP / (self.TP + self.FP)
+        if self._binary:
+            return self.TP / (self.TP + self.FP)
+        else:
+            logger.warning("PPV only available for binary classification.")
 
     @property
     def FDR(self):
         """False Discovery Rate"""
-        return self.FP / (self.TP + self.FP)
+        if self._binary:
+            return self.FP / (self.TP + self.FP)
+        else:
+            logger.warning("FDR only available for binary classification.")
 
     @property
     def FOR(self):
         """False Omission Rate"""
-        return self.FN / (self.FN + self.TN)
+        if self._binary:
+            return self.FN / (self.FN + self.TN)
+        else:
+            logger.warning("FOR only available for binary classification.")
 
     @property
     def NPV(self):
         """Negative Predictive Value"""
-        return self.TN / (self.FN + self.TN)
+        if self._binary:
+            return self.TN / (self.FN + self.TN)
+        else:
+            logger.warning("NPV only available for binary classification.")
 
     @property
     def TPR(self):
         """True Positive Rate (Recall, Sensitivity, Probability of detection)"""
-        return self.TP / (self.TP + self.FN)
+        if self._binary:
+            return self.TP / (self.TP + self.FN)
+        else:
+            logger.warning("TPR only available for binary classification.")
 
     @property
     def FNR(self):
         """False Negative Rate (Miss rate)"""
-        return self.FN / (self.FN + self.TN)
+        if self._binary:
+            return self.FN / (self.FN + self.TN)
+        else:
+            logger.warning("FNR only available for binary classification.")
 
     @property
     def FPR(self):
         """False Positive Rate (probability of false alarm)"""
-        return self.FP / (self.FP + self.TN)
+        if self._binary:
+            return self.FP / (self.FP + self.TN)
+        else:
+            logger.warning("FPR only available for binary classification.")
 
     @property
     def TNR(self):
         """True Negative Rate (Specificity, Selectivity)"""
-        return self.TN / (self.FP + self.TN)
+        if self._binary:
+            return self.TN / (self.FP + self.TN)
+        else:
+            logger.warning("TNR only available for binary classification.")
 
     @property
     def Prevalence(self):
         """Prevalence"""
-        return (self.TP + self.FN) / (self.TP + self.FP + self.FN + self.TN)
+        if self._binary:
+            return (self.TP + self.FN) / (self.TP + self.FP + self.FN + self.TN)
+        else:
+            logger.warning("Prevalence only available for binary classification.")
 
     @property
     def ACC(self):
         """Accuracy"""
-        return (self.TP + self.TN) / (self.TP + self.FP + self.FN + self.TN)
+        if self._binary:
+            return (self.TP + self.TN) / (self.TP + self.FP + self.FN + self.TN)
+        else:
+            logger.warning("ACC only available for binary classification.")
 
     @property
     def F1score(self):
         """F1 score"""
-        return 2 * self.TP / (2 * self.TP + self.FP + self.FN)
+        if self._binary:
+            return 2 * self.TP / (2 * self.TP + self.FP + self.FN)
+        else:
+            logger.warning("F1score only available for binary classification.")
 
     @property
     def TS(self):
         """Threat Score / Critical Success Index"""
-        return self.TP / (self.TP + self.FN + self.FP)
+        if self._binary:
+            return self.TP / (self.TP + self.FN + self.FP)
+        else:
+            logger.warning("TS only available for binary classification.")
+
+    def plot_cm(
+        self,
+        figsize: T.Tuple[int, int] = (6, 6),
+        labels: T.List[str] = None,
+        title: str = None,
+        annotate: T.Union[int, None] = None,
+        colorbar: bool = False,
+        cbar_label: str = None,
+        cmap: str = "viridis",
+        title_fontdict=dict(size=12, weight="heavy"),
+        tick_fontdict=dict(size=12, weight="medium"),
+        label_fontdict=dict(size=12, weight="medium"),
+        labelpad: int = 8,
+        **kwargs,
+    ):
+        """
+        Plot a confusion matrix as a heatmap.
+
+        Args:
+            figsize: Figure size.
+            labels: List of labels for the confusion matrix. If given, length must match that of the confusion matrix.
+            Default is the values in the data.
+            title: Title of the confusion matrix plot.
+            annotate: If None, no annotation is plotted. Otherwise the integer is the size of the annotated value in each cell.
+            colorbar: If True, a colorbar is added to the plot.
+            cmap: Colormap for the heatmap.
+            tick_fontdict: Font dictionary for the axis labels.
+            title_fontdict: Font dictionary for the title.
+            kwargs: Additional keyword arguments for the seaborn heatmap function.
+
+        Returns:
+            fig, ax: Figure and axis objects.
+        """
+        if labels is None:
+            labels = self.labels
+
+        if annotate is None:
+            annotate = False
+            annot_kws = None
+        else:
+            annot_kws = {"size": annotate}
+            annotate = True
+
+        fig, ax = plt.subplots(figsize=figsize)
+
+        if colorbar:
+            cbar = True
+            cbar_kws = {"label": cbar_label}
+        else:
+            cbar = None
+            cbar_kws = None
+
+        sns.heatmap(
+            self.cm,
+            ax=ax,
+            annot=annotate,
+            annot_kws=annot_kws,
+            cmap=cmap,
+            linewidths=1,
+            linecolor="w",
+            square=True,
+            xticklabels=labels,
+            yticklabels=labels,
+            cbar=cbar,
+            cbar_kws=cbar_kws,
+            **kwargs,
+        )
+
+        ax.set_title(title, fontdict=title_fontdict)
+        ax.set_xlabel("Truth", fontdict=label_fontdict, labelpad=labelpad)
+        ax.set_ylabel("Predicted", fontdict=label_fontdict, labelpad=labelpad)
+        ax.set_xticklabels(ax.get_xmajorticklabels(), fontdict=tick_fontdict)
+        ax.set_yticklabels(ax.get_ymajorticklabels(), fontdict=tick_fontdict)
+        fig.tight_layout()
+        return fig, ax

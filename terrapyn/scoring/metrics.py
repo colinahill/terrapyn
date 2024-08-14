@@ -325,7 +325,7 @@ def mae_df(
     if output_index_names is not None:
         output_index_names = ensure_list(output_index_names)
         score.index = output_index_names
-    score.index.name = "mae"
+    score.name = "mae"
     return score
 
 
@@ -353,7 +353,7 @@ def mse_df(
     if output_index_names is not None:
         output_index_names = ensure_list(output_index_names)
         score.index = output_index_names
-    score.index.name = "mse"
+    score.name = "mse"
     return score
 
 
@@ -381,7 +381,7 @@ def me_df(
     if output_index_names is not None:
         output_index_names = ensure_list(output_index_names)
         score.index = output_index_names
-    score.index.name = "me"
+    score.name = "me"
     return score
 
 
@@ -406,7 +406,7 @@ def rmse_df(
     """
     mse_score = mse_df(df, model_name, obs_name, output_index_names, axis)
     score = np.power(mse_score, 0.5)
-    score.index.name = "rmse"
+    score.name = "rmse"
     return score
 
 
@@ -417,7 +417,7 @@ def bias_df(
     output_index_names: T.Iterable = None,
 ) -> pd.DataFrame:
     """
-    Calc BIAS for columns in a pandas dataframe
+    Calc Bias for columns in a pandas dataframe
 
     Args:
         df: the input dataframe
@@ -456,7 +456,7 @@ def bias_df(
         if output_index_names is not None:
             output_index_names = ensure_list(output_index_names)
             score.index = output_index_names
-    score.index.name = "bias"
+    score.name = "bias"
     return score
 
 
@@ -467,7 +467,7 @@ def efficiency_df(
     output_index_names: T.Iterable = None,
 ) -> pd.DataFrame:
     """
-    Calc EFFICIENCY for columns in a pandas dataframe
+    Calc Efficiency score for columns in a pandas dataframe
 
     Args:
         df: the input dataframe

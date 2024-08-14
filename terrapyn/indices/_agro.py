@@ -19,9 +19,8 @@ def growing_degree_days(
     if tmax is None or tmin is None:
         raise ValueError("Both tmax and tmin must be provided.")
 
-    if t_base >= t_cutoff:
-        raise ValueError("t_base must be less than t_cutoff.")
+    if t_cutoff is None:
+        t_cutoff = np.inf
 
-    gdd = (((tmax.clip(max=t_cutoff) + tmin) / 2) - t_base).clip(min=0)
-
+    gdd = np.clip((np.clip(tmax, a_min=None, a_max=t_cutoff) + tmin) / 2 - t_base, a_min=0, a_max=None)
     return gdd

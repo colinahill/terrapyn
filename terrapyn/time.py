@@ -835,7 +835,7 @@ def groupby_freq(
     freq: str = "D",
     closed: str = "left",
     day_start_hour: int = 0,
-    other_grouping_columns: list = None,
+    other_grouping_keys: list = None,
 ):
     """
     Group data by time.
@@ -892,12 +892,12 @@ def groupby_freq(
             if isinstance(data, pd.DataFrame):
                 # time_dim not in index, look in columns for DataFrames
                 if time_dim in data.columns:
-                    if other_grouping_columns is None:
+                    if other_grouping_keys is None:
                         return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
                     else:
-                        other_grouping_columns = tp.utils.ensure_list(other_grouping_columns)
+                        other_grouping_keys = tp.utils.ensure_list(other_grouping_keys)
                         return data.groupby(
-                            [pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_columns]
+                            [pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_keys]
                         )
 
             raise ValueError(f"time_dim=`{time_dim}` not found in data")
@@ -921,7 +921,7 @@ def resample_time(
     closed: str = "left",
     resample_method: str = "sum",
     day_start_hour: int = 0,
-    other_grouping_columns: list = None,
+    other_grouping_keys: list = None,
 ):
     """
     Resample data in time.
@@ -945,7 +945,7 @@ def resample_time(
         freq=freq,
         closed=closed,
         day_start_hour=day_start_hour,
-        other_grouping_columns=other_grouping_columns,
+        other_grouping_keys=other_grouping_keys,
     )
 
     # if resample_method == 'cumsum':
@@ -1080,41 +1080,6 @@ def test_disaggregate_to_daily():
     assert disaggregated["data"].equals(expected)
 
 
-################################################
-
-# Dictionary to define the relative order of pandas time frequencies, where a lower value is higher frequency.
-# FREQUENCY_DICT = {
-#     "N": 0,
-#     "U": 1,
-#     "us": 1,
-#     "L": 2,
-#     "ms": 2,
-#     "S": 3,
-#     "T": 4,
-#     "min": 4,
-#     "H": 5,
-#     "D": 6,
-#     "W": 7,
-#     "M": 8,
-#     "Q": 9,
-#     "A": 10,
-#     "Y": 10,
-# }
-
-
-# def parse_date(date: T.Union[str, dt.datetime, pd.Timestamp] = None):
-#     """
-#     Parse a date string and return a dt.datetime.
-#     By default return today's date at time 00:00
-#     """
-#     if date is None:
-#         return dt.datetime.combine(dt.datetime.now(), dt.time.min)
-#     elif isinstance(date, str):
-#         return dateutil.parser.parse(date, fuzzy=True)
-#     else:
-#         return date
-
-
 def yearly_date_range(
     start_time: dt.datetime = None,
     end_time: dt.datetime = None,
@@ -1169,76 +1134,3 @@ def select_time_range(data, start_time=None, end_time=None):
         return data.loc[pd.IndexSlice[start_time:end_time, :], :]
     elif isinstance(data, pd.Series):
         return data.loc[pd.IndexSlice[start_time:end_time, :]]
-
-
-# def freq_to_timedelta64(freq):
-#     """
-#     Transforms pd.resample method freq to timedelta64 in ns
-
-#     Args:
-#         freq (str): Resample freq (s, m, H, D, Y) or a multiple of them (for example "4D")
-#     Returns:
-#         (np.timedelta64) A timedelta64 in ns
-
-#     example 1 : Day
-#     >>> freq_to_timedelta64("D")
-#     numpy.timedelta64(86400000000000,'ns')
-
-#     example 2 : iHour
-#     >>> freq_to_timedelta64("12H")
-#     numpy.timedelta64(43200000000000,'ns')
-
-#     example 3 : ihour
-#     >>> freq_to_timedelta64("6h")
-#     numpy.timedelta64(21600000000000,'ns')
-
-#     example 4 : Month
-#     >>> freq_to_timedelta64("M") is None
-#     True
-#     """
-#     step, resample_freq = split_freq(freq)
-
-#     if resample_freq is not None:
-#         if resample_freq == "M":
-#             logging.warning("M leads to ambiguous timedelta64. Unable to determine the timedelta64.")
-#         elif len(resample_freq) == 1 and 0 < len(step):
-#             if resample_freq == "H":
-#                 resample_freq = resample_freq.lower()
-#             return np.timedelta64(int(step), resample_freq).astype("timedelta64[ns]")
-#         elif len(resample_freq) == 1 and len(step) == 0:
-#             if resample_freq == "H":
-#                 resample_freq = resample_freq.lower()
-#             return np.timedelta64(1, resample_freq).astype("timedelta64[ns]")
-#     else:
-#         raise ValueError("Only s, m, h, H, D, Y are accepted as freq")
-
-
-# def split_freq(freq):
-#     """
-#     Splits the resample freq into the step size and the time freq
-
-#     example 1 : Day
-#     >>> split_freq("D")
-#     ('', 'D')
-
-#     example 2 : iHour
-#     >>> split_freq("6H")
-#     ('6', 'H')
-
-#     example 3 : iMonthStart
-#     >>> split_freq("5MS")
-#     ('5', 'M')
-
-#     example 4 : Other
-#     >>> split_freq("BS")
-#     ('', None)
-#     """
-#     step = ""
-#     resample_freq = None
-#     for char in freq:
-#         if char.isdigit():
-#             step += char
-#         elif char in "smhHDMY":
-#             resample_freq = char
-#             break
-#     return step, resample_freq

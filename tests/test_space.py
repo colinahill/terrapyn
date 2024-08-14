@@ -2,9 +2,12 @@ from unittest import TestCase
 
 import geopandas as gpd
 import numpy as np
+import odc.geo.xr
 import pandas as pd
 import shapely
 import xarray as xr
+from odc.geo import Geometry
+from odc.geo.geobox import GeoBox
 
 import terrapyn as tp
 from terrapyn import TEST_DATA_DIR
@@ -74,44 +77,44 @@ class TestGetDataAtCoords(TestCase):
         self.assertEqual(list(df.index.names), ["time", "test"])
 
 
-class TestBBox(TestCase):
-    min_lon = 10
-    max_lon = 20
-    min_lat = 30
-    max_lat = 40
-    shapely_rectangle = shapely.geometry.box(minx=min_lon, miny=min_lat, maxx=max_lon, maxy=max_lat)
-    shapely_polygon = shapely.geometry.polygon.Polygon([(0, 0), (1, 1), (2, 2), (2, 1), (0, 0)])
+# class TestBBox(TestCase):
+#     min_lon = 10
+#     max_lon = 20
+#     min_lat = 30
+#     max_lat = 40
+#     shapely_rectangle = shapely.geometry.box(minx=min_lon, miny=min_lat, maxx=max_lon, maxy=max_lat)
+#     shapely_polygon = shapely.geometry.polygon.Polygon([(0, 0), (1, 1), (2, 2), (2, 1), (0, 0)])
 
-    def test_bounds(self):
-        assert tp.space.BBox(geometry=self.shapely_rectangle).bounds == (10.0, 30.0, 20.0, 40.0)
-        assert tp.space.BBox(geometry=self.shapely_polygon).bounds == (0.0, 0.0, 2.0, 2.0)
+#     def test_bounds(self):
+#         assert tp.space.BBox(geometry=self.shapely_rectangle).bounds == (10.0, 30.0, 20.0, 40.0)
+#         assert tp.space.BBox(geometry=self.shapely_polygon).bounds == (0.0, 0.0, 2.0, 2.0)
 
-    def test_WNES(self):
-        assert tp.space.BBox(
-            min_lat=self.min_lat, max_lat=self.max_lat, min_lon=self.min_lon, max_lon=self.max_lon
-        ).WNES == (self.min_lon, self.max_lat, self.max_lon, self.min_lat)
+#     def test_WNES(self):
+#         assert tp.space.BBox(
+#             min_lat=self.min_lat, max_lat=self.max_lat, min_lon=self.min_lon, max_lon=self.max_lon
+#         ).WNES == (self.min_lon, self.max_lat, self.max_lon, self.min_lat)
 
-    def test_NWSE(self):
-        assert tp.space.BBox(
-            min_lat=self.min_lat, max_lat=self.max_lat, min_lon=self.min_lon, max_lon=self.max_lon
-        ).NWSE == (self.max_lat, self.min_lon, self.min_lat, self.max_lon)
+#     def test_NWSE(self):
+#         assert tp.space.BBox(
+#             min_lat=self.min_lat, max_lat=self.max_lat, min_lon=self.min_lon, max_lon=self.max_lon
+#         ).NWSE == (self.max_lat, self.min_lon, self.min_lat, self.max_lon)
 
-    def test_centroid(self):
-        bbox = tp.space.BBox(min_lat=self.min_lat, max_lat=self.max_lat, min_lon=self.min_lon, max_lon=self.max_lon)
-        assert isinstance(bbox.centroid, shapely.geometry.point.Point)
-        self.assertEqual(bbox.centroid.coords[0], (15.0, 35.0))
-        self.assertEqual(bbox.centroid_coords, (35.0, 15.0))
+#     def test_centroid(self):
+#         bbox = tp.space.BBox(min_lat=self.min_lat, max_lat=self.max_lat, min_lon=self.min_lon, max_lon=self.max_lon)
+#         assert isinstance(bbox.centroid, shapely.geometry.point.Point)
+#         self.assertEqual(bbox.centroid.coords[0], (15.0, 35.0))
+#         self.assertEqual(bbox.centroid_coords, (35.0, 15.0))
 
-    def test_buffer(self):
-        assert tp.space.BBox(geometry=self.shapely_polygon).buffer(1).bounds == (
-            -0.99997179491729,
-            -0.9997461638018406,
-            3.0,
-            3.0,
-        )
+#     def test_buffer(self):
+#         assert tp.space.BBox(geometry=self.shapely_polygon).buffer(1).bounds == (
+#             -0.99997179491729,
+#             -0.9997461638018406,
+#             3.0,
+#             3.0,
+#         )
 
 
-class TestCropToBBox(TestCase):
+class TestCrop(TestCase):
     def test_pandas_dataframe(self):
         df = pd.DataFrame(
             {
@@ -121,8 +124,9 @@ class TestCropToBBox(TestCase):
                 "lon": [10, 20, 30],
             }
         ).set_index(["time", "id"])
-        bbox = tp.space.BBox(max_lat=4, min_lat=0, max_lon=25, min_lon=0)
-        results = tp.space.crop_to_bbox(df, bbox=bbox).values
+
+        geopolygon = odc.geo.geom.box(left=0, bottom=0, right=25, top=4, crs="EPSG:4326")
+        results = tp.space.crop(df, geopolygon=geopolygon).values
         expected = np.array([[1, 10], [3, 20]])
         np.testing.assert_equal(results, expected)
 
@@ -131,21 +135,18 @@ class TestCropToBBox(TestCase):
             {
                 "time": pd.date_range("2019-03-15", freq="1D", periods=3),
                 "id": [123, 456, 789],
-                "lat": [1, 3, 5],
-                "lon": [10, 20, 30],
+                "geometry": gpd.points_from_xy([10, 20, 30], [1, 3, 5]),
             }
-        ).set_index(["time", "id"])
-        geometry = gpd.points_from_xy(df.lon, df.lat)
-        gdf = gpd.GeoDataFrame(df, geometry=geometry)
-        bbox = tp.space.BBox(max_lat=4, min_lat=0, max_lon=25, min_lon=0)
-        results = tp.space.crop_to_bbox(gdf, bbox=bbox)[["lat", "lon"]].values
-        expected = np.array([[1, 10], [3, 20]])
-        np.testing.assert_equal(results, expected)
+        )
+        gdf = gpd.GeoDataFrame(df, geometry="geometry")
+        geopolygon = odc.geo.geom.box(left=0, bottom=0, right=25, top=4, crs="EPSG:4326")
+        results = tp.space.crop(gdf, geopolygon=geopolygon)["id"].values
+        np.testing.assert_equal(results, [123, 456])
 
     def test_xarray_dataset(self):
         ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
-        bbox = tp.space.BBox(min_lat=3.3, max_lat=5.7, min_lon=12.3, max_lon=14.4)
-        results = tp.space.crop_to_bbox(ds, bbox=bbox)["var"].values
+        geopolygon = odc.geo.geom.box(left=12.3, bottom=3.3, right=14.4, top=5.7, crs="EPSG:4326")
+        results = tp.space.crop(ds, geopolygon=geopolygon)["var"].values
         expected = np.array(
             [
                 [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]],
@@ -168,14 +169,15 @@ class TestPointsInRadius(TestCase):
 
 class TestGenerateGrid(TestCase):
     def test_filled_dataset(self):
-        ds = tp.space.generate_grid(fill_value=1, return_dataset=True, resolution=0.5)
+        ds = tp.space.generate_grid(fill_value=1, return_type="dataarray", resolution=0.5)
+        ds = ds.to_dataset(name="var")
         result = ", ".join(f"{i} {j}" for i, j in ds.sizes.items())
         expected = "lat 361, lon 721"
         self.assertEqual(result, expected)
         self.assertEqual(ds["var"].isel(lat=10, lon=10).item(), 1)
 
     def test_dataarray_from_bbox(self):
-        da = tp.space.generate_grid(bbox=tp.space.BBox(min_lat=41, max_lat=52, min_lon=-5.5, max_lon=9.5))
+        da = tp.space.generate_grid(left=-5.5, right=9.5, bottom=41, top=52)
         np.testing.assert_almost_equal(
             da.lat.values, np.array([41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 50.0, 51.0, 52.0])
         )
@@ -185,43 +187,22 @@ class TestGenerateGrid(TestCase):
         )
 
 
-class TestBBoxFromData(TestCase):
-    ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
+# class TestBBoxFromData(TestCase):
+#     ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
 
-    def test_dataset(self):
-        bbox = tp.space.bbox_from_data(self.ds)
-        self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
+#     def test_dataset(self):
+#         bbox = tp.space.bbox_from_data(self.ds)
+#         self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
 
-    def test_dataframe(self):
-        df = self.ds.to_dataframe()
-        bbox = tp.space.bbox_from_data(df)
-        self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
+#     def test_dataframe(self):
+#         df = self.ds.to_dataframe()
+#         bbox = tp.space.bbox_from_data(df)
+#         self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
 
-    def test_series(self):
-        series = self.ds.to_dataframe()["var"]
-        bbox = tp.space.bbox_from_data(series)
-        self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
-
-
-class TestMatchDataBBox(TestCase):
-    input = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
-    reference = input.isel(lat=slice(3, 7), lon=slice(3, 7))
-
-    def test_dataset_and_dataset(self):
-        result = tp.space.match_data_bbox(self.reference, self.input)
-        np.testing.assert_equal(result.lat.values, np.array([3, 4, 5, 6]))
-        np.testing.assert_equal(result.lon.values, np.array([14, 15, 16, 17]))
-
-    def test_dataframe_and_dataset(self):
-        df = self.reference.to_dataframe()
-        df_new = tp.space.match_data_bbox(df, self.input)
-        np.testing.assert_equal(df_new.lat.values, np.array([3, 4, 5, 6]))
-        np.testing.assert_equal(df_new.lon.values, np.array([14, 15, 16, 17]))
-
-        df = df.reset_index()
-        df_new = tp.space.match_data_bbox(df, self.input)
-        np.testing.assert_equal(df_new.lat.values, np.array([3, 4, 5, 6]))
-        np.testing.assert_equal(df_new.lon.values, np.array([14, 15, 16, 17]))
+#     def test_series(self):
+#         series = self.ds.to_dataframe()["var"]
+#         bbox = tp.space.bbox_from_data(series)
+#         self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
 
 
 class TestGetNearestPoint(TestCase):

@@ -532,7 +532,7 @@ class TestGroupbyFreq(unittest.TestCase):
     def test_dataframe_time_column_other_cols(self):
         result = (
             tp.time.groupby_freq(
-                self.ds_hourly_multicoord.to_dataframe().reset_index(drop=False), freq="D", other_grouping_columns="lat"
+                self.ds_hourly_multicoord.to_dataframe().reset_index(drop=False), freq="D", other_grouping_keys="lat"
             )
             .sum()["lon"]
             .values
