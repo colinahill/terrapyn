@@ -13,78 +13,6 @@ from scipy.spatial import cKDTree
 
 import terrapyn as tp
 
-# class BBox:
-#     """
-#     Object to define and store a bounding box. Coordinates can be user-defined by passing
-#     coordinates, or by passing a geometry. Bounding coordinates are stored as a shapely polygon,
-#     accessible with the `geom` attribute.
-
-#     By default, bounding box is set to the entire globe
-
-#     Attributes:
-#         min_lon (float): The minimum longitude
-#         max_lon (float): The maximum longitude
-#         min_lat (float): The minimum latitude
-#         max_lat (float): The maximum latitude
-#         geom (shapely.geometry): The shapely.geometry object that defines the bounding box.
-#         bounds: Returns the outer bounds of the geometry (a rectangle).
-#         WNES (tuple): Tuple of bounding coordinates in order of West, North, East, South.
-#         NWSE (tuple): Tuple of bounding coordinates in order of North, West, South, East.
-#     """
-
-#     def __init__(self, geometry=None, min_lon=-180, max_lon=180, min_lat=-90, max_lat=90):
-#         if geometry is None:
-#             self.geom = shapely.geometry.box(minx=min_lon, miny=min_lat, maxx=max_lon, maxy=max_lat)
-#         else:
-#             if not isinstance(geometry, shapely.geometry.base.BaseGeometry):
-#                 raise TypeError("`geometry` must be a shapely geometry type")
-#             self.geom = geometry
-
-#         self.min_lon, self.min_lat, self.max_lon, self.max_lat = self.geom.bounds
-
-#     def __repr__(self):
-#         return (
-#             f"BBox(min_lon={self.min_lon}, max_lon={self.max_lon}, " f"min_lat={self.min_lat}, max_lat={self.max_lat})"
-#         )
-
-#     @property
-#     def bounds(self):
-#         return self.geom.bounds
-
-#     @property
-#     def WNES(self):
-#         return (self.min_lon, self.max_lat, self.max_lon, self.min_lat)
-
-#     @property
-#     def NWSE(self):
-#         return (self.max_lat, self.min_lon, self.min_lat, self.max_lon)
-
-#     @property
-#     def centroid(self):
-#         return self.geom.centroid
-
-#     @property
-#     def centroid_coords(self) -> T.Tuple[float, float]:
-#         """Coordinates of the centroid of bounding region, a tuple of (latitude, longitude)."""
-#         lon, lat = list(self.geom.centroid.coords)[0]
-#         return (lat, lon)
-
-#     def buffer(self, distance=0, resolution=16, cap_style=1, join_style=1, mitre_limit=5.0, single_sided=False):
-#         """
-#         Buffer/Expand BBox geometry following Shapely buffer method and return new BBox. Does not modify
-#         original BBox geometry. https://shapely.readthedocs.io/en/latest/manual.html#object.buffer
-#         """
-#         return BBox(
-#             geometry=self.geom.buffer(
-#                 distance=distance,
-#                 resolution=resolution,
-#                 cap_style=cap_style,
-#                 join_style=join_style,
-#                 mitre_limit=mitre_limit,
-#                 single_sided=single_sided,
-#             )
-#         )
-
 
 def get_data_at_coords(
     data: T.Union[xr.Dataset, xr.DataArray] = None,
@@ -406,40 +334,41 @@ def crop(
         raise ValueError("Coordinates not found. Either `lon_name` and `lat_name` or `geometry_name` must be provided")
 
 
-# def bbox_from_data(
-#     data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, gpd.GeoDataFrame] = None,
-#     lon_name: str = "lon",
-#     lat_name: str = "lat",
-#     use_pixel_bounds: bool = False,
-#     decimals: int = 9,
-# ) -> BBox:
-#     """
-#     Generate BBox from input data.
+def data_bounds(
+    data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, gpd.GeoDataFrame] = None,
+    lon_name: str = "lon",
+    lat_name: str = "lat",
+    use_pixel_bounds: bool = False,
+    decimals: int = 9,
+) -> T.Tuple:
+    """
+    Retrieve bounds from input data.
 
-#     Args:
-#         data: Input data
-#         lon_name: Name of longitude dimension/column
-#         lat_name: Name of latitude dimension/column
-#         use_pixel_bounds: If `True` the boundary will be the bounds of the outermost coordinates in the
-#         data, otherwise the bounds will be the pixel centers.
-#         decimals: Number of decimal places to return (using `np.around`). A value of `9` is
-#         around 1 cm on the Earth's surface if the coordinates are in degrees.
+    Args:
+        data: Input data
+        lon_name: Name of longitude dimension/column
+        lat_name: Name of latitude dimension/column
+        use_pixel_bounds: If `True` the boundary will be the bounds of the outermost coordinates in the
+        data, otherwise the bounds will be the pixel centers.
+        decimals: Number of decimal places to return (using `np.around`). A value of `9` is
+        around 1 cm on the Earth's surface if the coordinates are in degrees.
 
-#     Returns:
-#         BBox Subset of data that is within the given bounding box
-#     """
-#     lats, lons = get_lat_lon_from_data(data, lon_name, lat_name, unique=True)
+    Returns:
+        Returns Tuple of SW and NE corners in lat/lon order, ((lat_s, lon_w), (lat_n, lon_e))
+    """   
+    lats, lons = get_lat_lon_from_data(data, lon_name, lat_name, unique=True)
 
-#     if use_pixel_bounds:
-#         lats = get_coordinate_bounds_from_centers(lats)
-#         lons = get_coordinate_bounds_from_centers(lons)
+    if use_pixel_bounds:
+        lats = get_coordinate_bounds_from_centers(lats)
+        lons = get_coordinate_bounds_from_centers(lons)
 
-#     min_lat = np.around(lats.min(), decimals=decimals)
-#     max_lat = np.around(lats.max(), decimals=decimals)
-#     min_lon = np.around(lons.min(), decimals=decimals)
-#     max_lon = np.around(lons.max(), decimals=decimals)
+    min_lat = np.around(lats.min(), decimals=decimals)
+    max_lat = np.around(lats.max(), decimals=decimals)
+    min_lon = np.around(lons.min(), decimals=decimals)
+    max_lon = np.around(lons.max(), decimals=decimals)
+    
+    return  ((min_lat, min_lon), (max_lat, max_lon))
 
-#     return BBox(max_lat=max_lat, min_lon=min_lon, min_lat=min_lat, max_lon=max_lon)
 
 
 def generate_grid(

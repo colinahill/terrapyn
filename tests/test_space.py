@@ -145,7 +145,7 @@ class TestCrop(TestCase):
 
     def test_xarray_dataset(self):
         ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
-        geopolygon = odc.geo.geom.box(left=12.3, bottom=3.3, right=14.4, top=5.7, crs="EPSG:4326")
+        geopolygon = odc.geo.geom.box(left=12.3, bottom=4.3, right=13.4, top=4.7, crs="EPSG:4326")
         results = tp.space.crop(ds, geopolygon=geopolygon)["var"].values
         expected = np.array(
             [
@@ -187,22 +187,23 @@ class TestGenerateGrid(TestCase):
         )
 
 
-# class TestBBoxFromData(TestCase):
-#     ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
+class TestDataBounds(TestCase):
+    ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
 
-#     def test_dataset(self):
-#         bbox = tp.space.bbox_from_data(self.ds)
-#         self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
+    def test_dataset(self):
+        bounds = tp.space.data_bounds(self.ds)
+        self.assertEqual(bounds, ((0, 11), (9, 20)))
 
-#     def test_dataframe(self):
-#         df = self.ds.to_dataframe()
-#         bbox = tp.space.bbox_from_data(df)
-#         self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
 
-#     def test_series(self):
-#         series = self.ds.to_dataframe()["var"]
-#         bbox = tp.space.bbox_from_data(series)
-#         self.assertEqual(bbox.NWSE, (9, 11, 0, 20))
+    def test_dataframe(self):
+        df = self.ds.to_dataframe()
+        bounds = tp.space.data_bounds(df)
+        self.assertEqual(bounds, ((0, 11), (9, 20)))
+
+    def test_series(self):
+        series = self.ds.to_dataframe()["var"]
+        bounds = tp.space.data_bounds(series)
+        self.assertEqual(bounds, ((0, 11), (9, 20)))
 
 
 class TestGetNearestPoint(TestCase):

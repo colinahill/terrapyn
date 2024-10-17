@@ -8,7 +8,7 @@ license="BSD-3-Clause"
 packages = [{include = "terrapyn"}]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.10,<3.13"
 xarray = {extras = ["complete"], version = "^2024.6.0"}
 pandas = "^2"
 geopandas = "*"
@@ -32,11 +32,12 @@ google-cloud-bigquery = "^3.20.1"
 db-dtypes = "^1.2.0"
 scikit-learn = "^1.4.2"
 seaborn = "^0.13.2"
-odc-geo = {path = "../odc-geo", develop = true}
+odc-geo = "*"
 zarr = "^2.18.2"
 gcsfs = "^2024.6.1"
 bokeh = "^3.5.0"
 openpyxl = "^3.1.5"
+distributed = "^2024.9.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3"

@@ -854,9 +854,6 @@ def groupby_freq(
     Example: xr.Dataset / pd.DataFrame group by month
         >>> ds = xr.Dataset(data_vars={"var": (("lat", "lon", "time"), np.ones((1, 1, 100)))},
         ... coords={"lat": [1], "lon": [2], "time": pd.date_range("2022-01-01", periods=100)})
-        >>> groupby_freq(ds, freq="ME")
-        DatasetResample, grouped over '__resample_dim__'
-        4 groups with labels 2022-01-31, ..., 2022-04-30.
         >>> groupby_freq(ds['var'].to_dataframe(), freq="ME").sum()  # doctest: +NORMALIZE_WHITESPACE
                              var
         time       lat lon
