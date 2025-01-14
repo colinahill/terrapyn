@@ -4,12 +4,12 @@ ci:
 minimum_pre_commit_version: 3.0.4
 
 repos:
-  # sync pre-commit with poetry.lock
-  - repo: https://github.com/floatingpurr/sync_with_poetry
-    rev: 1.1.0 # the revision or tag to clone at
-    hooks:
-      - id: sync_with_poetry
-        args: [] # optional args
+  # # sync pre-commit with poetry.lock
+  # - repo: https://github.com/floatingpurr/sync_with_poetry
+  #   rev: 1.1.0 # the revision or tag to clone at
+  #   hooks:
+  #     - id: sync_with_poetry
+  #       args: [] # optional args
 
   # general checks (see here: https://pre-commit.com/hooks.html)
   - repo: https://github.com/pre-commit/pre-commit-hooks
