@@ -1,62 +1,83 @@
-[tool.poetry]
+[project]
 name = "terrapyn"
 version = "0.1.4"
-description="Toolkit to manipulate Earth observations and models."
-authors = ["colinahill <colinalastairhill@gmail.com>"]
+description = "Toolkit to manipulate Earth observations and models."
+authors = [{name = "Colin Hill", email = "colinalastairhill@gmail.com"}]
 readme = "README.md"
-license="BSD-3-Clause"
-packages = [{include = "terrapyn"}]
+license = {file = "LICENCE.md"}
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.12"
-xarray = "^2024"
-pandas = "^2"
-geopandas = "*"
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tool.pixi.pypi-dependencies]
+terrapyn = { path = ".", editable = true }
+polygon_geohasher = "*"
+
+[tool.pixi.dependencies]
+python = ">=3.10"
+xarray = "*"
 numpy = "*"
 scipy = "*"
-dask = "^2024"
-matplotlib = "^3"
-bottleneck = "^1"
-shapely = "^2"
+dask = "*"
 netcdf4 = "*"
-ipykernel = "^6"
-pyarrow = "^15"
+zarr = "*"
+bottleneck = "*"
+pandas = "*"
+geopandas = "*"
+matplotlib = "*"
+shapely = "*"
+ipykernel = "*"
+pyarrow = "*"
 fiona = "*"
 tqdm = "*"
-jupyterlab = "^4.1"
+jupyterlab = "*"
 rioxarray = "*"
-earthengine-api = "^0.1"
-polygon-geohasher = "*"
+earthengine-api = "*"
 geemap = "*"
-google-cloud-bigquery = "^3.20.1"
-db-dtypes = "^1.2.0"
-scikit-learn = "^1.4.2"
+google-cloud-bigquery = "*"
+db-dtypes = "*"
+scikit-learn = "*"
+seaborn = "*"
+odc-geo = "*"
+gcsfs = "*"
+bokeh = "*"
+openpyxl = "*"
+distributed = "*"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.3"
-pytest-cov = "^4.0"
-isort = "^5"
-black = "^23.3"
-pre-commit = "^3.2"
-freezegun = "^1.2"
-nbstripout = "^0.6"
-coverage-badge = "^1.1"
-ruff = "^0.3"
+[tool.pixi.feature.dev.dependencies]
+pytest = "*"
+pytest-cov = "*"
+isort = "*"
+black = "*"
+pre-commit = "*"
+freezegun = "*"
+nbstripout = "*"
+coverage-badge = "*"
+ruff = "*"
+
+[tool.pixi.environments]
+prod = { features = [], solve-group = "prod" }
+default = { features = ["dev"], solve-group = "prod" }
+
+[tool.pixi.tasks]
+lint = { cmd = "ruff check --fix terrapyn/ tests/", description = "Lint the code" }
+format = { cmd = "ruff format terrapyn/ tests/", description = "Format the code" }
+test = { cmd = "pytest terrapyn/ tests/", description = "Run tests" }
 
 [tool.ruff]
 line-length = 120
 target-version = "py311"
 
-[tool.black]
-line-length = 120
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["D1", "D2", "D4", "TID"]
 
-[tool.isort]
-profile = 'black'
+[tool.ruff.format]
+indent-style = "tab"
+docstring-code-format = true
+docstring-code-line-length = 120
 
 [tool.pytest.ini_options]
 # Ignore earth engine directory 'ee'
 addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=terrapyn/ee"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
