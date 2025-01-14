@@ -1,0 +1,72 @@
+[project]
+name = "terrapyn"
+version = "0.1.4"
+authors = ["colinahill <colinalastairhill@gmail.com>"]
+description="Toolkit to manipulate Earth observations and models."
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+readme = "README.md"
+license = "BSD-3-Clause"
+
+[dependencies]
+python = ">=3.10"
+xarray = "*"
+numpy = "*"
+scipy = "*"
+dask = "*"
+netcdf4 = "*"
+zarr = "*"
+bottleneck = "*"
+pandas = "*"
+geopandas = "*"
+matplotlib = "*"
+shapely = "*"
+ipykernel = "*"
+pyarrow = "*"
+fiona = "*"
+tqdm = "*"
+jupyterlab = "*"
+rioxarray = "*"
+earthengine-api = "*"
+geemap = "*"
+google-cloud-bigquery = "*"
+db-dtypes = "*"
+scikit-learn = "*"
+seaborn = "*"
+odc-geo = "*"
+gcsfs = "*"
+bokeh = "*"
+openpyxl = "*"
+distributed = "*"
+
+[feature.dev.dependencies]
+pytest = "*"
+pytest-cov = "*"
+isort = "*"
+black = "*"
+pre-commit = "*"
+freezegun = "*"
+nbstripout = "*"
+coverage-badge = "*"
+ruff = "*"
+
+[tool.pypi-dependencies]
+terrapyn = { path = ".", editable = true }
+
+[environments]
+default = { features = [], solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = 'black'
+
+[tool.pytest.ini_options]
+# Ignore earth engine directory 'ee'
+addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=terrapyn/ee"
