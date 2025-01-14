@@ -4,13 +4,15 @@ import geopandas as gpd
 import numpy as np
 import odc.geo.xr
 import pandas as pd
-import shapely
+# import shapely
 import xarray as xr
-from odc.geo import Geometry
-from odc.geo.geobox import GeoBox
 
 import terrapyn as tp
 from terrapyn import TEST_DATA_DIR
+
+# from odc.geo import Geometry
+# from odc.geo.geobox import GeoBox
+
 
 
 class TestGetDataAtCoords(TestCase):
@@ -193,7 +195,6 @@ class TestDataBounds(TestCase):
     def test_dataset(self):
         bounds = tp.space.data_bounds(self.ds)
         self.assertEqual(bounds, ((0, 11), (9, 20)))
-
 
     def test_dataframe(self):
         df = self.ds.to_dataframe()

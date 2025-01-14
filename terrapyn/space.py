@@ -2,12 +2,10 @@ import typing as T
 
 import geopandas as gpd
 import numpy as np
-import odc.geo.xr
+import odc.geo.xr  # noqa
 import pandas as pd
-import shapely.geometry
 import xarray as xr
 from odc.geo import Geometry
-from odc.geo.geobox import GeoBox
 from pyproj import Geod
 from scipy.spatial import cKDTree
 
@@ -295,8 +293,9 @@ def crop(
         data: Input data
         geopolygon: A odc.geo.geom.Geometry polygon used to crop the data. If `None`, data is returned unaltered.
         apply_mask: Whether to mask out pixels outside of the rasterized extent of poly by setting them to NaN.
-        all_touched: If True and apply_mask=True, the rasterize step will burn in all pixels touched by geopolygon. If False, only pixels
-        whose centers are within the polygon or that are selected by Bresenham’s line algorithm will be burned in.
+        all_touched: If True and apply_mask=True, the rasterize step will burn in all pixels touched by geopolygon.
+        If False, only pixels whose centers are within the polygon or that are selected by Bresenham’s line algorithm
+        will be burned in.
         lon_name: Name of longitude dimension/column.
         lat_name: Name of latitude dimension/column.
         geometry_name: Name of column containing coordinates of shapely point objects in geopandas.GeoDataFrame.
@@ -355,7 +354,7 @@ def data_bounds(
 
     Returns:
         Returns Tuple of SW and NE corners in lat/lon order, ((lat_s, lon_w), (lat_n, lon_e))
-    """   
+    """
     lats, lons = get_lat_lon_from_data(data, lon_name, lat_name, unique=True)
 
     if use_pixel_bounds:
@@ -366,9 +365,8 @@ def data_bounds(
     max_lat = np.around(lats.max(), decimals=decimals)
     min_lon = np.around(lons.min(), decimals=decimals)
     max_lon = np.around(lons.max(), decimals=decimals)
-    
-    return  ((min_lat, min_lon), (max_lat, max_lon))
 
+    return ((min_lat, min_lon), (max_lat, max_lon))
 
 
 def generate_grid(
@@ -385,7 +383,8 @@ def generate_grid(
 
     Args:
         resolution: Resolution.
-        return_type: Type of object to return; 'numpy' for arrays of latitude, longitude, 'dataarray' for Xarray DataArray.
+        return_type: Type of object to return; 'numpy' for arrays of latitude, longitude, 'dataarray'
+        for Xarray DataArray.
         fill_value: Value used to fill the grid. Defaults to `np.nan` if `fill_value` is `None`.
 
     Returns:

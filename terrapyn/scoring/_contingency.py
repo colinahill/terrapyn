@@ -3,7 +3,6 @@ import typing as T
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from sklearn.metrics import confusion_matrix
 
 import terrapyn as tp
@@ -82,8 +81,9 @@ class ConfusionMatrix:
             self.labels = tp.utils.ensure_list(labels_to_include)
         self.labels.sort()
 
-        # If the shape of the confusion matrix is 2x2 then the binary statistics are available. If not then 2 labels must
-        # be provided to yield a 2x2 matrix to enable the statistics. Otherwise, only plotting is available.
+        # If the shape of the confusion matrix is 2x2 then the binary statistics are available.
+        # If not then 2 labels must be provided to yield a 2x2 matrix to enable the statistics.
+        # Otherwise, only plotting is available.
         if self.cm.shape == (2, 2):
             self.TN, self.FP, self.FN, self.TP = self.cm.ravel()
             self._binary = True
@@ -216,7 +216,8 @@ class ConfusionMatrix:
             labels: List of labels for the confusion matrix. If given, length must match that of the confusion matrix.
             Default is the values in the data.
             title: Title of the confusion matrix plot.
-            annotate: If None, no annotation is plotted. Otherwise the integer is the size of the annotated value in each cell.
+            annotate: If None, no annotation is plotted. Otherwise the integer is the size of the annotated value
+            in each cell.
             colorbar: If True, a colorbar is added to the plot.
             cmap: Colormap for the heatmap.
             tick_fontdict: Font dictionary for the axis labels.

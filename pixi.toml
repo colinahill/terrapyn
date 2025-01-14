@@ -61,11 +61,13 @@ prod = { features = [], solve-group = "prod" }
 line-length = 120
 target-version = "py311"
 
-[tool.black]
-line-length = 120
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["D1", "D2", "D4", "TID"]
 
-[tool.isort]
-profile = 'black'
+[tool.ruff.format]
+indent-style = "tab"
+docstring-code-format = true
 
 [tool.pytest.ini_options]
 # Ignore earth engine directory 'ee'
