@@ -10,21 +10,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          cache: 'pip' # caching pip dependencies
-      - name: Install poetry
-        run: pip install poetry
+      - uses: prefix-dev/setup-pixi@v0.8.1
+      with:
+        pixi-version: v0.39.5
+        cache: true
+        auth-host: prefix.dev
+        python-version: '3.11'
       - name: Install dependencies
-        run: poetry install
+        run: pixi install 
       - name: Check style with Ruff
-        run: poetry run ruff terrapyn/ tests/ --extend-ignore=D1,D2,D4,TID
+        run: pixi run ruff terrapyn/ tests/ --extend-ignore=D1,D2,D4,TID
       - name: Check format with black
-        run: poetry run black --check terrapyn/ tests/
+        run: pixi run black --check terrapyn/ tests/
       - name: Unit & Coverage test with pytest
-        run: poetry run pytest terrapyn/ tests/
+        run: pixi run pytest terrapyn/ tests/
       - name: Update Coverage Badge
         run: |
           pip install readme-coverage-badger
