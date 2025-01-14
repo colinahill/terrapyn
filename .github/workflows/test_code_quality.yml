@@ -21,7 +21,9 @@ jobs:
       - name: Install dependencies
         run: pixi install
       - name: Lint and format with Ruff
-        run: pixi run ruff check terrapyn/ tests/
+        run: |
+          pixi run ruff check terrapyn/ tests/
+          pixi run format --check terrapyn/ tests/
       - name: Unit & Coverage test with pytest
         run: pixi run pytest terrapyn/ tests/
       - name: Update Coverage Badge

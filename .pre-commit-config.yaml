@@ -3,51 +3,42 @@ ci:
 
 minimum_pre_commit_version: 3.0.4
 
-repos:
-  # # sync pre-commit with poetry.lock
-  # - repo: https://github.com/floatingpurr/sync_with_poetry
-  #   rev: 1.1.0 # the revision or tag to clone at
-  #   hooks:
-  #     - id: sync_with_poetry
-  #       args: [] # optional args
+exclude: (^.pixi/)
 
-  # general checks (see here: https://pre-commit.com/hooks.html)
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: Ruff lint
+        entry: pixi run lint
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+        stages: [pre-commit, manual]
+      - id: ruff-format
+        name: Ruff format
+        entry: pixi run format
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+        stages: [pre-commit, manual]
   - repo: https://github.com/pre-commit/pre-commit-hooks
+  # general checks (see here: https://pre-commit.com/hooks.html)
     rev: v4.4.0
     hooks:
       - id: check-added-large-files
       - id: check-json
-        exclude: .vscode
+        exclude: .vscode | ^.pixi/
       - id: check-case-conflict
       - id: detect-private-key
-      - id: end-of-file-fixer
+      - id: mixed-line-ending
       - id: mixed-line-ending
       - id: trailing-whitespace
       - id: check-toml
       - id: check-yaml
-
-  # black - formatting
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
-    hooks:
-      - id: black
-        args: [--line-length=120]
-
-  # isort - sorting imports
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-
-  # Ruff - linting
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.291'
-    hooks:
-      - id: ruff
-        args: [--line-length=120]
-
-  # nbstripout
+      - id: end-of-file-fixer
   - repo: https://github.com/kynan/nbstripout
+    # nbstripout
     rev: 0.6.1
     hooks:
       - id: nbstripout

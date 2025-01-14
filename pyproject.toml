@@ -1,14 +1,20 @@
 [project]
 name = "terrapyn"
 version = "0.1.4"
-authors = ["colinahill <colinalastairhill@gmail.com>"]
-description="Toolkit to manipulate Earth observations and models."
+description = "Toolkit to manipulate Earth observations and models."
+authors = [{name = "Colin Hill", email = "colinalastairhill@gmail.com"}]
+readme = "README.md"
+license = {file = "LICENCE.md"}
+
+[tool.pixi.project]
 channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
-readme = "README.md"
-license = "BSD-3-Clause"
 
-[dependencies]
+[tool.pixi.pypi-dependencies]
+terrapyn = { path = ".", editable = true }
+polygon_geohasher = "*"
+
+[tool.pixi.dependencies]
 python = ">=3.10"
 xarray = "*"
 numpy = "*"
@@ -39,7 +45,7 @@ bokeh = "*"
 openpyxl = "*"
 distributed = "*"
 
-[feature.dev.dependencies]
+[tool.pixi.feature.dev.dependencies]
 pytest = "*"
 pytest-cov = "*"
 isort = "*"
@@ -50,12 +56,14 @@ nbstripout = "*"
 coverage-badge = "*"
 ruff = "*"
 
-[tool.pypi-dependencies]
-terrapyn = { path = ".", editable = true }
-
-[environments]
-default = { features = ["dev"], solve-group = "prod" }
+[tool.pixi.environments]
 prod = { features = [], solve-group = "prod" }
+default = { features = ["dev"], solve-group = "prod" }
+
+[tool.pixi.tasks]
+lint = { cmd = "ruff check --fix terrapyn/ tests/", description = "Lint the code" }
+format = { cmd = "ruff format terrapyn/ tests/", description = "Format the code" }
+test = { cmd = "pytest terrapyn/ tests/", description = "Run tests" }
 
 [tool.ruff]
 line-length = 120
@@ -68,6 +76,7 @@ ignore = ["D1", "D2", "D4", "TID"]
 [tool.ruff.format]
 indent-style = "tab"
 docstring-code-format = true
+docstring-code-line-length = 120
 
 [tool.pytest.ini_options]
 # Ignore earth engine directory 'ee'
