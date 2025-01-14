@@ -54,8 +54,8 @@ ruff = "*"
 terrapyn = { path = ".", editable = true }
 
 [environments]
-default = { features = [], solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default" }
+default = { features = ["dev"], solve-group = "prod" }
+prod = { features = [], solve-group = "prod" }
 
 [tool.ruff]
 line-length = 120
