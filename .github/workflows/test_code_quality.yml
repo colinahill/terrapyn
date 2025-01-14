@@ -15,7 +15,7 @@ jobs:
           pixi-version: v0.39.5
           cache: true
           auth-host: prefix.dev
-          python-version: '3.11'
+          auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
       - name: Install dependencies
         run: pixi install 
       - name: Check style with Ruff
