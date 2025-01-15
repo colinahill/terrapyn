@@ -14,7 +14,6 @@ classifiers = [
 	"Programming Language :: Python :: 3.12",
 	"Programming Language :: Python :: 3.13",
 ]
-dependencies = ["polygon-geohasher>=0.0.1,<0.0.2"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -22,7 +21,7 @@ platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
 terrapyn = { path = ".", editable = true }
-polygon_geohasher = "*"
+polygon_geohasher = ">=0.0.1,<0.0.2"
 
 [tool.pixi.dependencies]
 python = ">=3.10"

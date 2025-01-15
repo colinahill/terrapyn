@@ -11142,9 +11142,7 @@ packages:
 - pypi: .
   name: terrapyn
   version: 0.1.5
-  sha256: da59c21c71e3fb0d436864926440450396b663738123ab7c89dddee4e3bdb108
-  requires_dist:
-  - polygon-geohasher>=0.0.1,<0.0.2
+  sha256: ad3084c6e45472fc346733360b9cd845cda120166bd051f78b0b0d11edc5cdc5
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.5.0-pyhc1e730c_0.conda
