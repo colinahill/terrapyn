@@ -11142,7 +11142,8 @@ packages:
 - pypi: .
   name: terrapyn
   version: 0.1.4
-  sha256: 929d873fc67eb429ffeeb0fb87cdfb5659b325899ef2756953e49e74afcdb07f
+  sha256: 5ae56f9e2b81e17ad3e1c3b47850764d6b7255f3b17b0324b801807787cc70c1
+  requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.5.0-pyhc1e730c_0.conda
   sha256: 45e402941f6bed094022c5726a2ca494e6224b85180d2367fb6ddd9aea68079d
