@@ -14,6 +14,7 @@ classifiers = [
 	"Programming Language :: Python :: 3.12",
 	"Programming Language :: Python :: 3.13",
 ]
+dependencies = ["polygon-geohasher>=0.0.1,<0.0.2"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -38,16 +39,16 @@ matplotlib = "*"
 shapely = "*"
 ipykernel = "*"
 pyarrow = "*"
-fiona = "*"
+fiona = ">=1.10.1,<2"
 tqdm = "*"
 jupyterlab = "*"
 rioxarray = "*"
 earthengine-api = "*"
 geemap = "*"
-google-cloud-bigquery = "*"
+google-cloud-bigquery = ">=2.1.0,<3"
 db-dtypes = "*"
 scikit-learn = "*"
-seaborn = "*"
+seaborn = ">=0.13.2,<0.14"
 odc-geo = "*"
 gcsfs = "*"
 bokeh = "*"

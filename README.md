@@ -3,7 +3,7 @@
 ![Code Coverage](https://img.shields.io/badge/Coverage-83%25-yellowgreen.svg)
 [![PyPI version](https://badge.fury.io/py/terrapyn.svg)](https://badge.fury.io/py/terrapyn)
 ![versions](https://img.shields.io/pypi/pyversions/terrapyn.svg)
-[![GitHub license](https://img.shields.io/pypi/l/terrapyn)](https://github.com/colinahill/terrapyn/blob/main/LICENSE.md)
+![GitHub license](https://img.shields.io/badge/license-BSD--3--Clause-blue?style=flat-square)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 Toolkit to manipulate Earth Observation Data: Remote Sensing, Climate and Weather models. Designed to work with `Pandas`/`GeoPandas` and `Xarray` data structures, implementing `Dask` where possible.
