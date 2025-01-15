@@ -4,7 +4,7 @@
 [![PyPI version](https://badge.fury.io/py/terrapyn.svg)](https://badge.fury.io/py/terrapyn)
 ![versions](https://img.shields.io/pypi/pyversions/terrapyn.svg)
 [![GitHub license](https://img.shields.io/pypi/l/terrapyn)](https://github.com/colinahill/terrapyn/blob/main/LICENSE.md)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 Toolkit to manipulate Earth Observation Data: Remote Sensing, Climate and Weather models. Designed to work with `Pandas`/`GeoPandas` and `Xarray` data structures, implementing `Dask` where possible.
 
@@ -33,25 +33,15 @@ The package can be installed in an existing Python environment via pip:
 pip install terrapyn
 ```
 
-#### From source
+#### From Source
 Clone the repo and install the package:
 
 ```bash
 git clone https://github.com/colinahill/terrapyn.git && cd terrapyn
 ```
 
-This project uses [Poetry](https://python-poetry.org/) to manage dependencies. In the case where Poetry doesn't automatically find the correct Python path, you can set it with
+This project uses [Pixi](https://pixi.sh/) to manage dependencies, which should be installed first. Then, install the package with
 
 ```bash
-pyenv local 3.10
-poetry env use 3.10
+pixi install
 ```
-
-Then install the package
-```bash
-poetry install  # Creates a virtualenv and installs package into it
-poetry shell  # Opens a sub-shell in the virtualenv
-```
-
-
-
