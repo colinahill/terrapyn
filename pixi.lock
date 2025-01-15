@@ -11141,8 +11141,8 @@ packages:
   timestamp: 1710265922593
 - pypi: .
   name: terrapyn
-  version: 0.1.5
-  sha256: ad3084c6e45472fc346733360b9cd845cda120166bd051f78b0b0d11edc5cdc5
+  version: 0.1.6
+  sha256: 90bb35761657f0d1db5a330f8dcd79c88fe799612767749945abd09b1c69fc89
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.5.0-pyhc1e730c_0.conda

@@ -1,6 +1,6 @@
 [project]
 name = "terrapyn"
-version = "0.1.5"
+version = "0.1.6"
 description = "Toolkit to manipulate Earth observations and models."
 authors = [{name = "Colin Hill", email = "colinalastairhill@gmail.com"}]
 readme = "README.md"
