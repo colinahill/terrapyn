@@ -4,7 +4,8 @@ version = "0.1.4"
 description = "Toolkit to manipulate Earth observations and models."
 authors = [{name = "Colin Hill", email = "colinalastairhill@gmail.com"}]
 readme = "README.md"
-license = {file = "LICENCE.md"}
+license = {file = "LICENSE.md"}
+requires-python = ">=3.10"
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -81,3 +82,19 @@ docstring-code-line-length = 120
 [tool.pytest.ini_options]
 # Ignore earth engine directory 'ee'
 addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=terrapyn/ee"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/docs",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["terrapyn"]
+
+[tool.hatch.version]
+path = "pyproject.toml"
