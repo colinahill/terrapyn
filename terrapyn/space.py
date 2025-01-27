@@ -314,8 +314,10 @@ def crop(
 		return data
 
 	if isinstance(data, (xr.Dataset, xr.DataArray)):
-		if not hasattr(data, "spatial_ref"):
-			data = data.odc.assign_crs(crs=crs)
+		_crs = getattr(data, "spatial_ref", None)
+		if _crs is None:
+			_crs = getattr(data, "crs", crs)
+			data = data.odc.assign_crs(crs=_crs)
 		return data.odc.crop(poly=geopolygon, apply_mask=apply_mask, all_touched=all_touched)
 
 	elif isinstance(data, (pd.DataFrame, pd.Series, gpd.GeoDataFrame)):
