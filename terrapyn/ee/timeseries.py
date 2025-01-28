@@ -48,7 +48,7 @@ def reduce_regions(
 			reducer = reducer.setOutputs(output_names)
 
 	def img_reduce_regions(img):
-		date = ee.Date(img.get(date_property))
+		date = ee.Date(img.get(date_property)).format()
 
 		fc = img.reduceRegions(
 			collection=feature_collection,
