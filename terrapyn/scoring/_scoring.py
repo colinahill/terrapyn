@@ -121,8 +121,7 @@ def grouped_scores(
 	if other_grouping_keys is None:
 		# If no other grouping keys are given, only group by time
 		if groupby_time is False:
-			# TODO apply metrics to the whole DataFrame
-			pass
+			raise NotImplementedError("other_grouping_keys must be provided if groupby_time is False")
 	elif isinstance(other_grouping_keys, str):
 		other_grouping_keys = [other_grouping_keys]
 
