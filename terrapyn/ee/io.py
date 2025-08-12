@@ -1,7 +1,7 @@
 import ee
 import shapely
-from polygon_geohasher.polygon_geohasher import geohash_to_polygon
 
+# from polygon_geohasher.polygon_geohasher import geohash_to_polygon
 import terrapyn as tp
 
 
@@ -45,8 +45,8 @@ def shapely_to_ee(shapely_polygon: shapely.Polygon) -> ee.Geometry.Polygon:
 	return ee.Geometry.Polygon([lons_lats])
 
 
-def geohash_to_ee_polygon(geohash: str) -> ee.Geometry.Polygon:
-	"""Convert a geohash to an ee.Geometry.Polygon"""
-	shapely_polygon = geohash_to_polygon(geohash)
-	ee_polygon = shapely_to_ee(shapely_polygon)
-	return ee_polygon
+# def geohash_to_ee_polygon(geohash: str) -> ee.Geometry.Polygon:
+# 	"""Convert a geohash to an ee.Geometry.Polygon"""
+# 	shapely_polygon = geohash_to_polygon(geohash)
+# 	ee_polygon = shapely_to_ee(shapely_polygon)
+# 	return ee_polygon

@@ -1,6 +1,6 @@
 [project]
 name = "terrapyn"
-version = "0.1.8"
+version = "0.1.9"
 description = "Toolkit to manipulate Earth observations and models."
 authors = [{name = "Colin Hill", email = "colinalastairhill@gmail.com"}]
 readme = "README.md"
@@ -14,45 +14,79 @@ classifiers = [
 	"Programming Language :: Python :: 3.12",
 	"Programming Language :: Python :: 3.13",
 ]
+dependencies = [
+	"xarray",
+	"numpy",
+	"scipy",
+	"dask",
+	"netcdf4",
+	"zarr",
+	"bottleneck",
+	"pandas",
+	"geopandas",
+	"matplotlib",
+	"shapely",
+	"ipykernel",
+	"pyarrow",
+	"fiona",
+	"tqdm",
+	"jupyterlab",
+	"rioxarray",
+	"earthengine-api",
+	"geemap",
+	"google-cloud-bigquery",
+	"db-dtypes",
+	"scikit-learn",
+	"seaborn",
+	"odc-geo",
+	"gcsfs",
+	"bokeh",
+	"openpyxl",
+	"distributed"
+]
 
 [tool.pixi.project]
-channels = ["conda-forge"]
-platforms = ["osx-arm64", "linux-64"]
+platforms = ["win-64", "linux-64", "osx-arm64", "osx-64"]
+channels = [
+	"conda-forge",
+	"https://prefix.dev/pixi-build-backends",
+	"https://prefix.dev/conda-forge",
+]
+preview = ["pixi-build"]
 
 [tool.pixi.pypi-dependencies]
 terrapyn = { path = ".", editable = true }
-polygon_geohasher = ">=0.0.1,<0.0.2"
 
 [tool.pixi.dependencies]
 python = ">=3.10"
-xarray = "*"
-numpy = "*"
-scipy = "*"
-dask = "*"
-netcdf4 = "*"
-zarr = "*"
-bottleneck = "*"
-pandas = "*"
-geopandas = "*"
-matplotlib = "*"
-shapely = "*"
-ipykernel = "*"
-pyarrow = "*"
+xarray = ">=2025.4.0,<2026"
+numpy = ">=2.2.5,<3"
+scipy = ">=1.15.2,<2"
+dask = ">=2025.4.1,<2026"
+netcdf4 = ">=1.7.2,<2"
+zarr = ">=3.0.7,<4"
+bottleneck = ">=1.4.2,<2"
+pandas = ">=2.2.3,<3"
+geopandas = ">=1.0.1,<2"
+matplotlib = ">=3.10.1,<4"
+shapely = ">=2.1.0,<3"
+ipykernel = ">=6.29.5,<7"
+pyarrow = ">=20.0.0,<21"
 fiona = ">=1.10.1,<2"
-tqdm = "*"
-jupyterlab = "*"
-rioxarray = "*"
-earthengine-api = "*"
-geemap = "*"
-google-cloud-bigquery = ">=2.1.0,<3"
-db-dtypes = "*"
-scikit-learn = "*"
+tqdm = ">=4.67.1,<5"
+jupyterlab = ">=4.4.1,<5"
+rioxarray = ">=0.19.0,<0.20"
+earthengine-api = ">=1.5.13,<2"
+geemap = ">=0.35.3,<0.36"
+google-cloud-bigquery = ">=3.31.0,<4"
+db-dtypes = ">=1.4.2,<2"
+scikit-learn = ">=1.6.1,<2"
 seaborn = ">=0.13.2,<0.14"
-odc-geo = "*"
-gcsfs = "*"
-bokeh = "*"
-openpyxl = "*"
-distributed = "*"
+odc-geo = ">=0.4.10,<0.5"
+gcsfs = ">=2025.3.2,<2026"
+bokeh = ">=3.7.2,<4"
+openpyxl = ">=3.1.5,<4"
+distributed = ">=2025.4.1,<2026"
 
 [tool.pixi.feature.dev.dependencies]
 pytest = "*"
@@ -96,6 +130,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [tool.hatch.build.targets.sdist]
+include = ["terrapyn"]
 exclude = [
   "/.github",
   "/docs",
@@ -106,3 +141,9 @@ packages = ["terrapyn"]
 
 [tool.hatch.version]
 path = "pyproject.toml"
+
+[tool.pixi.package.build]
+backend = { name = "pixi-build-python", version = "0.1.*" }
+
+[tool.pixi.package.host-dependencies]
+hatchling = "*"
