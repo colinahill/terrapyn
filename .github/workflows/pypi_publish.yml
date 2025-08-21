@@ -7,6 +7,8 @@ on:
 
 jobs:
   publish-pypi:
+    # Skip this job if it's a pre-release
+    if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
     environment: release
     permissions:
