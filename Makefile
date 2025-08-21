@@ -1,11 +1,3 @@
-# lint:
-# 	poetry run ruff check terrapyn/ tests/ --extend-ignore=D1,D2,D4,TID
-
-# .PHONY: test
-# # Ignore earth engine directory 'ee'
-# test:
-# 	pytest --doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=terrapyn/ee
-
 .PHONY: help build format lint sync lock test upgrade all 
 
 help:
@@ -20,7 +12,7 @@ help:
 	@echo "  all      - Run lock, sync, format, lint, and test"
 
 build:
-	uv build
+	uv run hatch build
 
 format:
 	uv run ruff format terrapyn/ tests/
