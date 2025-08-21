@@ -7,26 +7,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test-code-quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.8.1
-        with:
-          pixi-version: v0.39.5
-          cache: true
-          auth-host: prefix.dev
-          auth-token: ${{ secrets.PREFIX_DEV_TOKEN }}
-      - name: Install dependencies
-        run: pixi install
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
       - name: Lint and format with Ruff
         run: |
-          pixi run ruff check terrapyn/ tests/
-          pixi run format --check terrapyn/ tests/
+          make lint
+          make format
       - name: Unit & Coverage test with pytest
-        run: pixi run pytest terrapyn/ tests/
+        run: make test
       - name: Update Coverage Badge
         run: |
-          pip install readme-coverage-badger
-          readme-cov
+          uv add readme-coverage-badger
+          uv run readme-cov
