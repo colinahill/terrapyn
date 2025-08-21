@@ -4,7 +4,7 @@ import ee
 def reduce_regions(
 	image_collection: ee.ImageCollection,
 	feature_collection: ee.FeatureCollection,
-	reducer: ee.Reducer = ee.Reducer.mean(),
+	reducer: ee.Reducer = ee.Reducer.mean(),  # noqa: B008
 	scale: float = 1_000,
 	crs: str = "EPSG:4326",
 	crsTransform: list = None,

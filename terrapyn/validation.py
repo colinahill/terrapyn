@@ -40,7 +40,7 @@ def check_latitude_radians(latitude):
 	if latitude is None:
 		raise ValueError("`latitude` must be provided")
 	elif np.any(latitude < _MIN_LATITUDE_RADIANS) or np.any(latitude > _MAX_LATITUDE_RADIANS):
-		raise ValueError("latitude outside valid range {0} to {1}".format(_MIN_LATITUDE_RADIANS, _MAX_LATITUDE_RADIANS))
+		raise ValueError(f"latitude outside valid range {_MIN_LATITUDE_RADIANS} to {_MAX_LATITUDE_RADIANS}")
 
 
 def check_solar_declination_radians(solar_declination):
@@ -55,9 +55,8 @@ def check_solar_declination_radians(solar_declination):
 		solar_declination > _MAX_SOLAR_DECLINATION_RADIANS
 	):
 		raise ValueError(
-			"solar declination outside valid range {0} to {1}".format(
-				_MIN_SOLAR_DECLINATION_RADIANS, _MAX_SOLAR_DECLINATION_RADIANS
-			)
+			f"solar declination outside valid range {_MIN_SOLAR_DECLINATION_RADIANS} to "
+			f"{_MAX_SOLAR_DECLINATION_RADIANS}"
 		)
 
 
@@ -73,9 +72,8 @@ def check_sunset_hour_angle_radians(sunset_hour_angle):
 		sunset_hour_angle > _MAX_SUNSET_HOUR_ANGLE_RADIANS
 	):
 		raise ValueError(
-			"`sunset_hour_angle` outside valid range {0} to {1}".format(
-				_MIN_SUNSET_HOUR_ANGLE_RADIANS, _MAX_SUNSET_HOUR_ANGLE_RADIANS
-			)
+			f"`sunset_hour_angle` outside valid range {_MIN_SUNSET_HOUR_ANGLE_RADIANS} to "
+			f"{_MAX_SUNSET_HOUR_ANGLE_RADIANS}"
 		)
 
 
@@ -96,6 +94,6 @@ def check_positive(values, string=None):
 		raise ValueError("`values` contains `NaN`")
 	elif np.any(values < 0.0):
 		if string is not None:
-			raise ValueError("{} has some non-positive values".format(string))
+			raise ValueError(f"{string} has some non-positive values")
 		else:
 			raise ValueError("Non-positive values")

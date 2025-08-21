@@ -16,11 +16,11 @@ from terrapyn import TEST_DATA_DIR
 
 
 class TestGetDataAtCoords(TestCase):
-	np.random.seed(42)
+	rng = np.random.default_rng(42)
 	n_lat = 4
 	n_lon = 4
 	n_time = 3
-	data = 5 + np.random.randn(n_time, n_lat, n_lon)
+	data = 5 + rng.standard_normal((n_time, n_lat, n_lon))
 	da = xr.DataArray(
 		data,
 		dims=["time", "lat", "lon"],
@@ -39,10 +39,11 @@ class TestGetDataAtCoords(TestCase):
 
 	def test_nearest_coordinate_values(self):
 		df = tp.space.get_data_at_coords(self.ds, lats=self.lats, lons=self.lons)
-		nearest_values_point_0 = df.loc[(slice(None), 0), "var"].values
-		np.testing.assert_almost_equal(nearest_values_point_0, np.array([5.64768854, 4.09197592, 5.82254491]))
-		nearest_values_point_1 = df.loc[(slice(None), 1), "var"].values
-		np.testing.assert_almost_equal(nearest_values_point_1, np.array([4.53427025, 5.37569802, 4.6988963]))
+		nearest_values_point_0 = df.loc[(slice(None), 0), "var"].to_numpy()
+		np.testing.assert_almost_equal(nearest_values_point_0, np.array([5.7504512, 5.8784503, 5.6159794]))
+
+		nearest_values_point_1 = df.loc[(slice(None), 1), "var"].to_numpy()
+		np.testing.assert_almost_equal(nearest_values_point_1, np.array([5.7777919, 5.3654441, 5.2321613]))
 
 	def test_missing_latitudes(self):
 		self.assertRaises(
@@ -55,10 +56,11 @@ class TestGetDataAtCoords(TestCase):
 
 	def test_linear_values(self):
 		df = tp.space.get_data_at_coords(self.ds, lats=self.lats, lons=self.lons, method="linear")
-		nearest_values_point_0 = df.loc[(slice(None), 0), "var"].values
-		np.testing.assert_almost_equal(nearest_values_point_0, np.array([5.95248557, 4.38774388, 5.11628122]))
-		nearest_values_point_1 = df.loc[(slice(None), 1), "var"].values
-		np.testing.assert_almost_equal(nearest_values_point_1, np.array([5.01396221, 4.63833409, 4.7608919]))
+		nearest_values_point_0 = df.loc[(slice(None), 0), "var"].to_numpy()
+		np.testing.assert_almost_equal(nearest_values_point_0, np.array([5.5509592, 5.9671203, 5.1714492]))
+
+		nearest_values_point_1 = df.loc[(slice(None), 1), "var"].to_numpy()
+		np.testing.assert_almost_equal(nearest_values_point_1, np.array([5.4747089, 5.3467357, 5.0764259]))
 
 	def test_id_names(self):
 		df = tp.space.get_data_at_coords(self.ds, lats=self.lats, lons=self.lons, point_names=self.ids, method="linear")
@@ -128,7 +130,7 @@ class TestCrop(TestCase):
 		).set_index(["time", "id"])
 
 		geopolygon = odc.geo.geom.box(left=0, bottom=0, right=25, top=4, crs="EPSG:4326")
-		results = tp.space.crop(df, geopolygon=geopolygon).values
+		results = tp.space.crop(df, geopolygon=geopolygon).to_numpy()
 		expected = np.array([[1, 10], [3, 20]])
 		np.testing.assert_equal(results, expected)
 
@@ -142,13 +144,13 @@ class TestCrop(TestCase):
 		)
 		gdf = gpd.GeoDataFrame(df, geometry="geometry")
 		geopolygon = odc.geo.geom.box(left=0, bottom=0, right=25, top=4, crs="EPSG:4326")
-		results = tp.space.crop(gdf, geopolygon=geopolygon)["id"].values
+		results = tp.space.crop(gdf, geopolygon=geopolygon)["id"].to_numpy()
 		np.testing.assert_equal(results, [123, 456])
 
 	def test_xarray_dataset(self):
 		ds = xr.open_dataset(TEST_DATA_DIR / "lat_10_lon_10_time_10_D_test_data.nc")
 		geopolygon = odc.geo.geom.box(left=12.3, bottom=4.3, right=13.4, top=4.7, crs="EPSG:4326")
-		results = tp.space.crop(ds, geopolygon=geopolygon)["var"].values
+		results = tp.space.crop(ds, geopolygon=geopolygon)["var"].to_numpy()
 		expected = np.array(
 			[
 				[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]],

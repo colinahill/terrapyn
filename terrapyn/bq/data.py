@@ -1,5 +1,4 @@
 import datetime as dt
-import typing as T
 
 import pandas as pd
 import shapely
@@ -81,8 +80,8 @@ class NOAA_GSOD:
 
 	def stations(
 		self,
-		start_date: dt.date = dt.date(1750, 1, 1),
-		end_date: dt.date = dt.date.today(),
+		start_date: dt.date | None = None,
+		end_date: dt.date | None = None,
 		geom: shapely.Geometry = None,
 	):
 		"""
@@ -99,9 +98,14 @@ class NOAA_GSOD:
 		if geom is None:
 			geom = shapely.geometry.box(-180, -90, 180, 90)
 
-		if isinstance(start_date, dt.datetime):
+		if start_date is None:
+			start_date = dt.date(1750, 1, 1)
+		elif isinstance(start_date, dt.datetime):
 			start_date = start_date.date()
-		if isinstance(end_date, dt.datetime):
+
+		if end_date is None:
+			end_date = dt.date.today()
+		elif isinstance(end_date, dt.datetime):
 			end_date = end_date.date()
 
 		geometry_string = _shapely_geometry_to_string_for_bigquery(geom)
@@ -140,9 +144,9 @@ class NOAA_GSOD:
 
 	def data(
 		self,
-		station_ids: T.Union[str, T.List[str]],
-		start_date: dt.date = dt.date(1750, 1, 1),
-		end_date: dt.date = dt.date.today(),
+		station_ids: str | list[str],
+		start_date: dt.date | None = None,
+		end_date: dt.date | None = None,
 	):
 		"""
 		Get weather data from the NOAA GSOD dataset for the given stations and date range.
@@ -157,8 +161,16 @@ class NOAA_GSOD:
 		"""
 		station_ids = tp.utils.ensure_list(station_ids)
 
-		if isinstance(start_date, dt.datetime):
+		if start_date is None:
+			start_date = dt.date(1750, 1, 1)
+		elif isinstance(start_date, dt.datetime):
 			start_date = start_date.date()
+
+		if end_date is None:
+			end_date = dt.date.today()
+		elif isinstance(end_date, dt.datetime):
+			end_date = end_date.date()
+
 		if isinstance(end_date, dt.datetime):
 			end_date = end_date.date()
 
@@ -224,8 +236,8 @@ class NOAA_GHCN:
 
 	def stations(
 		self,
-		start_date: dt.date = dt.date(1750, 1, 1),
-		end_date: dt.date = dt.date.today(),
+		start_date: dt.date | None = None,
+		end_date: dt.date | None = None,
 		geom: shapely.Geometry = None,
 	):
 		"""
@@ -242,9 +254,14 @@ class NOAA_GHCN:
 		if geom is None:
 			geom = shapely.geometry.box(-180, -90, 180, 90)
 
-		if isinstance(start_date, dt.datetime):
+		if start_date is None:
+			start_date = dt.date(1750, 1, 1)
+		elif isinstance(start_date, dt.datetime):
 			start_date = start_date.date()
-		if isinstance(end_date, dt.datetime):
+
+		if end_date is None:
+			end_date = dt.date.today()
+		elif isinstance(end_date, dt.datetime):
 			end_date = end_date.date()
 
 		geometry_string = _shapely_geometry_to_string_for_bigquery(geom)
@@ -291,9 +308,9 @@ class NOAA_GHCN:
 
 	def data(
 		self,
-		station_ids: T.Union[str, T.List[str]],
-		start_date: dt.date = dt.date(1750, 1, 1),
-		end_date: dt.date = dt.date.today(),
+		station_ids: str | list[str],
+		start_date: dt.date | None = None,
+		end_date: dt.date | None = None,
 	):
 		"""
 		Get weather data from the NOAA GHCN dataset for the given stations and date range.
@@ -308,9 +325,14 @@ class NOAA_GHCN:
 		"""
 		station_ids = tp.utils.ensure_list(station_ids)
 
-		if isinstance(start_date, dt.datetime):
+		if start_date is None:
+			start_date = dt.date(1750, 1, 1)
+		elif isinstance(start_date, dt.datetime):
 			start_date = start_date.date()
-		if isinstance(end_date, dt.datetime):
+
+		if end_date is None:
+			end_date = dt.date.today()
+		elif isinstance(end_date, dt.datetime):
 			end_date = end_date.date()
 
 		query = """

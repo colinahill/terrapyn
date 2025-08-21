@@ -36,7 +36,7 @@ ds_gamma_pdf = xr.Dataset(
 	coords={"lat": [1, 2], "lon": [3, 4]},
 )
 array_gamma_pdf = np.array(
-	[ds_gamma_pdf.isel(lon=0, lat=0)["shape"].values, ds_gamma_pdf.isel(lon=0, lat=0)["scale"].values]
+	[ds_gamma_pdf.isel(lon=0, lat=0)["shape"].to_numpy(), ds_gamma_pdf.isel(lon=0, lat=0)["scale"].to_numpy()]
 )
 
 

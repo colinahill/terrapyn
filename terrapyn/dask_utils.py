@@ -26,10 +26,10 @@ def create_cluster_and_client(n_workers: int = 4, threads_per_worker: int = 1, m
 
 
 def chunk_xarray(
-	data: T.Union[xr.Dataset, xr.DataArray] = None,
-	coords_no_chunking: T.Union[str, T.Iterable[str]] = None,
-	coords_chunking: T.Dict = None,
-) -> T.Union[xr.Dataset, xr.DataArray]:
+	data: xr.Dataset | xr.DataArray = None,
+	coords_no_chunking: str | T.Iterable[str] = None,
+	coords_chunking: dict = None,
+) -> xr.Dataset | xr.DataArray:
 	"""
 	Chunks xarrary data structures. If coordinate names are not given in `coords_no_chunking`, their chunk sizes
 	are automatically determined by Dask. Otherwise, they can be set explicitly with `coords_chunking`
@@ -72,10 +72,8 @@ def chunk_xarray(
 	return data.chunk(chunks)
 
 
-def uses_dask(data: T.Union[xr.Dataset, xr.DataArray] = None) -> T.Union[xr.Dataset, xr.DataArray]:
+def uses_dask(data: xr.Dataset | xr.DataArray = None) -> xr.Dataset | xr.DataArray:
 	"""Check if an xarray data structure uses Dask"""
-	if isinstance(data, xr.DataArray) and isinstance(data.data, dask.array.Array):
-		return True
-	if isinstance(data, xr.Dataset) and any(isinstance(var.data, dask.array.Array) for var in data.variables.values()):
-		return True
-	return False
+	return (isinstance(data, xr.DataArray) and isinstance(data.data, dask.array.Array)) or (
+		isinstance(data, xr.Dataset) and any(isinstance(var.data, dask.array.Array) for var in data.variables.values())
+	)

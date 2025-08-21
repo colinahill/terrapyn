@@ -1,5 +1,3 @@
-import typing as T
-
 import numpy as np
 
 import terrapyn as tp
@@ -196,7 +194,7 @@ def psychrometric_constant_of_psychrometer(psychrometer=None, atmos_pres=None):
 	elif psychrometer == 3:
 		psy_coeff = 0.001200
 	else:
-		raise ValueError("psychrometer should be in range 1 to 3: {0}".format(psychrometer))
+		raise ValueError(f"psychrometer should be in range 1 to 3: {psychrometer}")
 
 	if atmos_pres is None:
 		raise ValueError("`atmos_pres` must be provided")
@@ -529,10 +527,7 @@ def monthly_soil_heat_flux(t_month_prev, t_month, next_month=False):
 	Returns:
 		Monthly soil heat flux (Gmonth) [MJ m-2 day-1]
 	"""
-	if next_month:
-		factor = 0.07
-	else:
-		factor = 0.14
+	factor = 0.07 if next_month else 0.14
 	return factor * (t_month - t_month_prev)
 
 
@@ -630,7 +625,7 @@ def wind_direction(u, v, convention: str = "from", unit: str = "deg"):
 	return bearing
 
 
-def cartesian_to_polar(x, y, compass: bool = False) -> T.Tuple:
+def cartesian_to_polar(x, y, compass: bool = False) -> tuple:
 	"""
 	Transform cartesian coordinates into polar coordinates (modulus and angle). Polar coordinates
 	are given in the range [0, 2 * pi] using the trigonometric or bearing convention depending on

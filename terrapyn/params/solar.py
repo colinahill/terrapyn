@@ -85,9 +85,11 @@ def total_incoming_shortwave_radiation_from_sunshine_hours(dl_hours=None, sunshi
 	Returns:
 		Incoming solar (or shortwave) radiation [MJ m-2 day-1]
 	"""
-	for variable, name in zip([dl_hours, sunshine_hours, et_rad], ["dl_hours", "sunshine_hours", "et_rad"]):
+	for variable, name in zip(
+		[dl_hours, sunshine_hours, et_rad], ["dl_hours", "sunshine_hours", "et_rad"], strict=False
+	):
 		if variable is None:
-			raise ValueError("`{}` must be provided".format(name))
+			raise ValueError(f"`{name}` must be provided")
 
 	_check_day_hours(sunshine_hours)
 	_check_day_hours(dl_hours)
@@ -123,18 +125,15 @@ def total_incoming_shortwave_radiation_from_temperature(
 	Returns:
 		Incoming solar (or shortwave) radiation (Rs) [MJ m-2 day-1].
 	"""
-	for variable, name in zip([tmax, tmin, et_rad], ["tmax", "tmin", "et_rad"]):
+	for variable, name in zip([tmax, tmin, et_rad], ["tmax", "tmin", "et_rad"], strict=False):
 		if variable is None:
-			raise ValueError("`{}` must be provided".format(name))
+			raise ValueError(f"`{name}` must be provided")
 
 	if cs_rad is None:
 		cs_rad = clear_sky_radiation(altitude, et_rad)
 
 	# Determine value of adjustment coefficient [deg C-0.5] for coastal/interior locations
-	if coastal:
-		adj = 0.19
-	else:
-		adj = 0.16
+	adj = 0.19 if coastal else 0.16
 
 	total_incoming_shortwave_rad = adj * np.sqrt(tmax - tmin) * et_rad
 
@@ -447,7 +446,7 @@ def solar_declination(day_of_year=None):
 		solar declination [radians]
 	"""
 	_check_day_of_year(day_of_year)
-	return 0.409 * np.sin(((2.0 * np.pi / 365.0) * day_of_year - 1.39))
+	return 0.409 * np.sin((2.0 * np.pi / 365.0) * day_of_year - 1.39)
 
 
 def extraterrestrial_radiation(latitude=None, sol_dec=None, sha=None, ird=None, day_of_year=None):

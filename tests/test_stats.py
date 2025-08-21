@@ -49,11 +49,11 @@ class TestSigmaClip(unittest.TestCase):
 
 
 class TestCalculateQuantiles(unittest.TestCase):
-	np.random.seed(42)
+	rng = np.random.default_rng(42)
 	n_lat = 10
 	n_lon = 5
 	n_time = 20
-	data = 15 + 8 * np.random.randn(n_time, n_lat, n_lon)
+	data = 15 + 8 * rng.standard_normal((n_time, n_lat, n_lon))
 	da = xr.DataArray(
 		data,
 		dims=["time", "lat", "lon"],
@@ -71,40 +71,48 @@ class TestCalculateQuantiles(unittest.TestCase):
 	def test_xarray_dataset_no_rank(self):
 		result = tp.stats.calculate_quantiles(self.ds, dim="time")
 		np.testing.assert_almost_equal(
-			result.sel(quantile=0.25).isel(lat=0, lon=0)["var"].values.item(), 9.603166819607269
+			result.sel(quantile=0.25).isel(lat=0, lon=0)["var"].to_numpy().item(), 13.198666442842566
 		)
 
 	def test_xarray_dataset_with_rank(self):
 		result = tp.stats.calculate_quantiles(self.ds, dim="time", add_rank_coord=True)
-		self.assertEqual(result.sel(quantile=0.5)["rank"].values.item(), 2)
+		self.assertEqual(result.sel(quantile=0.5)["rank"].to_numpy().item(), 2)
 
 	def test_xarray_dataarray_no_rank(self):
 		result = tp.stats.calculate_quantiles(self.da, dim="time")
-		np.testing.assert_almost_equal(result.sel(quantile=0.25).isel(lat=0, lon=0).values.item(), 9.603166819607269)
+		np.testing.assert_almost_equal(
+			result.sel(quantile=0.25).isel(lat=0, lon=0).to_numpy().item(), 13.198666442842566
+		)
 
 	def test_xarray_dataarray_with_rank(self):
 		result = tp.stats.calculate_quantiles(self.da, dim="time", add_rank_coord=True)
-		self.assertEqual(result.sel(quantile=0.5)["rank"].values.item(), 2)
+		self.assertEqual(result.sel(quantile=0.5)["rank"].to_numpy().item(), 2)
 
 	def test_pandas_dataframe_no_rank(self):
 		result = tp.stats.calculate_quantiles(self.pandas_dataframe)
-		np.testing.assert_almost_equal(result.loc[0.5].values[0], 15.202404897879106)
+		np.testing.assert_almost_equal(result.loc[0.5].to_numpy()[0], 15.049422971193358)
 
 	def test_pandas_dataframe_wrong_axis_name(self):
 		result = tp.stats.calculate_quantiles(self.pandas_dataframe, dim="time")
-		np.testing.assert_almost_equal(result.loc[0.5].values[0], 15.202404897879106)
+		np.testing.assert_almost_equal(result.loc[0.5].to_numpy()[0], 15.049422971193358)
 
 	def test_pandas_dataframe_with_rank(self):
 		result = tp.stats.calculate_quantiles(self.pandas_dataframe, add_rank_coord=True)
-		np.testing.assert_almost_equal(result.loc[0.5].values, np.array([15.2024049, 2.0]))
+		np.testing.assert_almost_equal(result.loc[0.5].to_numpy()[0], 15.049422971193358)
+		self.assertEqual(result.loc[0.5]["rank"], 2)
+
+	def test_pandas_dataframe_with_rank_wrong_axis_name(self):
+		result = tp.stats.calculate_quantiles(self.pandas_dataframe, dim="time", add_rank_coord=True)
+		np.testing.assert_almost_equal(result.loc[0.5].to_numpy()[0], 15.049422971193358)
+		self.assertEqual(result.loc[0.5]["rank"], 2)
 
 	def test_pandas_series_no_rank(self):
 		result = tp.stats.calculate_quantiles(self.pandas_series)
-		np.testing.assert_almost_equal(result.loc[0.5], 15.202404897879106)
+		np.testing.assert_almost_equal(result.loc[0.5], 15.049422971193358)
 
 	def test_pandas_series_with_rank(self):
 		result = tp.stats.calculate_quantiles(self.pandas_series, add_rank_coord=True)
-		np.testing.assert_almost_equal(result.loc[0.5].values, np.array([15.2024049, 2.0]))
+		np.testing.assert_almost_equal(result.loc[0.5].values, np.array([15.049423, 2.0]))
 
 	def test_type_error(self):
 		with self.assertRaises(TypeError):
@@ -112,11 +120,11 @@ class TestCalculateQuantiles(unittest.TestCase):
 
 
 class TestRank(unittest.TestCase):
-	np.random.seed(42)
+	rng = np.random.default_rng(42)
 	n_lat = 10
 	n_lon = 5
 	n_time = 20
-	data = 15 + 8 * np.random.randn(n_time, n_lat, n_lon)
+	data = 15 + 8 * rng.standard_normal((n_time, n_lat, n_lon))
 	da = xr.DataArray(
 		data,
 		dims=["time", "lat", "lon"],
@@ -134,35 +142,35 @@ class TestRank(unittest.TestCase):
 		result = tp.stats.rank(self.ds)
 		np.testing.assert_equal(
 			result["var"].isel(lat=3, lon=3).values,
-			np.array([3, 16, 19, 10, 6, 8, 15, 13, 20, 5, 14, 2, 17, 1, 9, 4, 12, 18, 7, 11]),
+			np.array([14, 13, 20, 6, 7, 9, 17, 10, 8, 18, 15, 12, 2, 4, 5, 1, 11, 3, 19, 16]),
 		)
 
 	def test_xarray_dataset_start_rank(self):
 		result = tp.stats.rank(self.ds, starting_rank=0)
 		np.testing.assert_equal(
 			result["var"].isel(lat=3, lon=3).values,
-			np.array([2, 15, 18, 9, 5, 7, 14, 12, 19, 4, 13, 1, 16, 0, 8, 3, 11, 17, 6, 10]),
+			np.array([13, 12, 19, 5, 6, 8, 16, 9, 7, 17, 14, 11, 1, 3, 4, 0, 10, 2, 18, 15]),
 		)
 
 	def test_xarray_dataset_dask(self):
 		result = tp.stats.rank(self.ds_dask)
 		np.testing.assert_equal(
 			result["var"].isel(lat=3, lon=3).values,
-			np.array([3, 16, 19, 10, 6, 8, 15, 13, 20, 5, 14, 2, 17, 1, 9, 4, 12, 18, 7, 11]),
+			np.array([14, 13, 20, 6, 7, 9, 17, 10, 8, 18, 15, 12, 2, 4, 5, 1, 11, 3, 19, 16]),
 		)
 
 	def test_xarray_dataarray(self):
 		result = tp.stats.rank(self.da)
 		np.testing.assert_equal(
 			result.isel(lat=3, lon=3).values,
-			np.array([3, 16, 19, 10, 6, 8, 15, 13, 20, 5, 14, 2, 17, 1, 9, 4, 12, 18, 7, 11]),
+			np.array([14, 13, 20, 6, 7, 9, 17, 10, 8, 18, 15, 12, 2, 4, 5, 1, 11, 3, 19, 16]),
 		)
 
 	def test_xarray_dataarray_dask(self):
 		result = tp.stats.rank(self.ds_dask["var"])
 		np.testing.assert_equal(
 			result.isel(lat=3, lon=3).values,
-			np.array([3, 16, 19, 10, 6, 8, 15, 13, 20, 5, 14, 2, 17, 1, 9, 4, 12, 18, 7, 11]),
+			np.array([14, 13, 20, 6, 7, 9, 17, 10, 8, 18, 15, 12, 2, 4, 5, 1, 11, 3, 19, 16]),
 		)
 
 	def test_xarray_dataset_percent(self):
@@ -171,26 +179,26 @@ class TestRank(unittest.TestCase):
 			result["var"].isel(lat=3, lon=3).values,
 			np.array(
 				[
-					0.15,
-					0.8,
-					0.95,
-					0.5,
-					0.3,
-					0.4,
-					0.75,
+					0.7,
 					0.65,
 					1.0,
-					0.25,
-					0.7,
-					0.1,
-					0.85,
-					0.05,
-					0.45,
-					0.2,
-					0.6,
-					0.9,
+					0.3,
 					0.35,
+					0.45,
+					0.85,
+					0.5,
+					0.4,
+					0.9,
+					0.75,
+					0.6,
+					0.1,
+					0.2,
+					0.25,
+					0.05,
 					0.55,
+					0.15,
+					0.95,
+					0.8,
 				]
 			),
 		)

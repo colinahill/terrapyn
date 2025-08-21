@@ -13,7 +13,7 @@ import terrapyn as tp
 
 
 def get_data_at_coords(
-	data: T.Union[xr.Dataset, xr.DataArray] = None,
+	data: xr.Dataset | xr.DataArray = None,
 	lats: T.Iterable = None,
 	lons: T.Iterable = None,
 	point_names: T.Iterable = None,
@@ -25,7 +25,7 @@ def get_data_at_coords(
 	ignore_nan: bool = False,
 	as_dataframe: bool = True,
 	**kwargs,
-) -> T.Union[xr.Dataset, xr.DataArray, pd.DataFrame]:
+) -> xr.Dataset | xr.DataArray | pd.DataFrame:
 	"""
 	Retrieve values for the specified coordinates from an xr.Dataset/Array, for all time steps.
 
@@ -116,9 +116,9 @@ def get_data_at_coords(
 
 	# Drop lat and lon columns
 	if lat_dim in points.columns:
-		points.drop(columns=lat_dim, inplace=True)
+		points = points.drop(columns=lat_dim)
 	if lon_dim in points.columns:
-		points.drop(columns=lon_dim, inplace=True)
+		points = points.drop(columns=lon_dim)
 
 	# Rename labels for point coordinates to `point_names`
 	if point_names is not None:
@@ -146,7 +146,7 @@ def get_data_at_coords(
 	return points
 
 
-def _geodesic_distances_between_point_and_endpoints(point: T.Tuple[float, float], endpoints):
+def _geodesic_distances_between_point_and_endpoints(point: tuple[float, float], endpoints):
 	"""
 	Return the geodesic distances in kilometres (km) between `point` and the points in `endpoints`.
 	`point` and `endpoints` have column order of (lat, lon)
@@ -177,8 +177,8 @@ def _index_and_distance_of_nearest_point(point, endpoints):
 
 def get_nearest_point(
 	df: pd.DataFrame,
-	lats: T.Union[float, T.Iterable],
-	lons: T.Union[float, T.Iterable],
+	lats: float | T.Iterable,
+	lons: float | T.Iterable,
 	lat_dim: str = "lat",
 	lon_dim: str = "lon",
 	method: str = "geodesic",
@@ -205,9 +205,9 @@ def get_nearest_point(
 	Returns:
 		A dataframe with the nearest points to the desired `lats` and `lons` coordinates
 	"""
-	if isinstance(lats, (float, int)):
+	if isinstance(lats, float | int):
 		lats = [lats]
-	if isinstance(lons, (float, int)):
+	if isinstance(lons, float | int):
 		lons = [lons]
 
 	# order of (lat, lon)
@@ -241,11 +241,11 @@ def get_nearest_point(
 
 
 def get_lat_lon_from_data(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, gpd.GeoDataFrame] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | gpd.GeoDataFrame = None,
 	lon_name: str = "lon",
 	lat_name: str = "lat",
 	unique: bool = True,
-) -> T.Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
 	"""
 	Extract latitude and longitude coordinates from data
 
@@ -258,31 +258,31 @@ def get_lat_lon_from_data(
 	Returns:
 		Tuple of arrays of lat and lon
 	"""
-	if isinstance(data, (xr.Dataset, xr.DataArray)):
-		lats = data[lat_name].values
-		lons = data[lon_name].values
-	elif isinstance(data, (pd.DataFrame, pd.Series, gpd.GeoDataFrame)):
+	if isinstance(data, xr.Dataset | xr.DataArray):
+		lats = data[lat_name].to_numpy()
+		lons = data[lon_name].to_numpy()
+	elif isinstance(data, pd.DataFrame | pd.Series | gpd.GeoDataFrame):
 		if lon_name in data.index.names and lat_name in data.index.names:
 			if unique:
-				lats = data.index.unique(lat_name).values
-				lons = data.index.unique(lon_name).values
+				lats = data.index.unique(lat_name).to_numpy()
+				lons = data.index.unique(lon_name).to_numpy()
 			else:
-				lats = data.index.get_level_values(lat_name).values
-				lons = data.index.get_level_values(lon_name).values
+				lats = data.index.get_level_values(lat_name).to_numpy()
+				lons = data.index.get_level_values(lon_name).to_numpy()
 		elif lon_name in data.columns and lat_name in data.columns:
 			if unique:
 				lats = data[lat_name].unique()
 				lons = data[lon_name].unique()
 			else:
-				lats = data[lat_name].values
-				lons = data[lon_name].values
+				lats = data[lat_name].to_numpy()
+				lons = data[lon_name].to_numpy()
 		else:
-			raise ValueError("{} and {} were not found in the data".format(lat_name, lon_name))
+			raise ValueError(f"{lat_name} and {lon_name} were not found in the data")
 	return lats, lons
 
 
 def crop(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, gpd.GeoDataFrame] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | gpd.GeoDataFrame = None,
 	geopolygon: Geometry = None,
 	apply_mask: bool = False,
 	all_touched: bool = True,
@@ -290,7 +290,7 @@ def crop(
 	lat_name: str = "lat",
 	geometry_name: str = "geometry",
 	crs="EPSG:4326",
-) -> T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, gpd.GeoDataFrame]:
+) -> xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | gpd.GeoDataFrame:
 	"""
 	Return all data within the given geobox. Accepts xarray dataset/array or pandas/geopandas dataframe.
 	Latitude can be ordered positive to negative, or negative to positive.
@@ -313,23 +313,19 @@ def crop(
 	if geopolygon is None:
 		return data
 
-	if isinstance(data, (xr.Dataset, xr.DataArray)):
+	if isinstance(data, xr.Dataset | xr.DataArray):
 		_crs = getattr(data, "spatial_ref", None)
 		if _crs is None:
 			_crs = getattr(data, "crs", crs)
 			data = data.odc.assign_crs(crs=_crs)
 		return data.odc.crop(poly=geopolygon, apply_mask=apply_mask, all_touched=all_touched)
 
-	elif isinstance(data, (pd.DataFrame, pd.Series, gpd.GeoDataFrame)):
+	elif isinstance(data, pd.DataFrame | pd.Series | gpd.GeoDataFrame):
 		# If data is geopandas.geodataframe, first try to clip by geometry column
-		if isinstance(data, gpd.GeoDataFrame):
-			if geometry_name in data.columns:
-				# Ensure CRS of data and geopolygon are the same
-				if getattr(data, "crs") is None:
-					data = data.set_crs(crs)
-				else:
-					data = data.to_crs(geopolygon.crs)
-				return data.clip(geopolygon.geom)
+		if isinstance(data, gpd.GeoDataFrame) and geometry_name in data.columns:
+			# Ensure CRS of data and geopolygon are the same
+			data = data.set_crs(crs) if data.crs is None else data.to_crs(geopolygon.crs)
+			return data.clip(geopolygon.geom)
 
 		# If data is pandas dataframe/series or geopandas dataframe without geometry
 		lats, lons = get_lat_lon_from_data(data, lon_name=lon_name, lat_name=lat_name, unique=False)
@@ -342,12 +338,12 @@ def crop(
 
 
 def data_bounds(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, gpd.GeoDataFrame] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | gpd.GeoDataFrame = None,
 	lon_name: str = "lon",
 	lat_name: str = "lat",
 	use_pixel_bounds: bool = False,
 	decimals: int = 9,
-) -> T.Tuple:
+) -> tuple:
 	"""
 	Retrieve bounds from input data.
 
@@ -384,8 +380,8 @@ def generate_grid(
 	top: float = 90,
 	resolution: float = 1.0,
 	return_type: str = "dataarray",
-	fill_value: T.Union[int, float] = None,
-) -> T.Union[T.Tuple[np.ndarray, np.ndarray], xr.DataArray, xr.Dataset]:
+	fill_value: int | float = None,
+) -> tuple[np.ndarray, np.ndarray] | xr.DataArray | xr.Dataset:
 	"""
 	Makes an xr.DataArray/xr.Dataset grid with optional variable and fill value.
 
@@ -404,17 +400,14 @@ def generate_grid(
 	if return_type == "numpy":
 		return lats, lons
 
-	if fill_value:
-		data = np.full(shape=(lats.shape[0], lons.shape[0]), fill_value=fill_value)
-	else:
-		data = np.nan
+	data = np.full(shape=(lats.shape[0], lons.shape[0]), fill_value=fill_value) if fill_value else np.nan
 
 	return xr.DataArray(data=data, coords={"lat": lats, "lon": lons}, dims=["lat", "lon"])
 
 
 def points_within_radius(
 	df: pd.DataFrame = None,
-	point: T.Tuple[float, float] = None,
+	point: tuple[float, float] = None,
 	radius_km: float = 100,
 	lat_col: str = "lat",
 	lon_col: str = "lon",
@@ -445,8 +438,8 @@ def points_within_radius(
 
 
 def add_coordinate_bounds(
-	data: T.Union[xr.Dataset, xr.DataArray], lat_name: str = "lat", lon_name: str = "lon"
-) -> T.Union[xr.Dataset, xr.DataArray]:
+	data: xr.Dataset | xr.DataArray, lat_name: str = "lat", lon_name: str = "lon"
+) -> xr.Dataset | xr.DataArray:
 	"""
 	Add coordinate bounds 'lon_b' and 'lat_b' to an input dataset/array
 
@@ -459,8 +452,8 @@ def add_coordinate_bounds(
 		The original data with new coordinates of `lat_b` and `lon_b` that give
 		the boundaries of the input coordinates.
 	"""
-	lons = data[lon_name].values
-	lats = data[lat_name].values
+	lons = data[lon_name].to_numpy()
+	lats = data[lat_name].to_numpy()
 	lat_bounds = get_coordinate_bounds_from_centers(lats)
 	lon_bounds = get_coordinate_bounds_from_centers(lons)
 	data["lon_b"] = lon_bounds
@@ -557,13 +550,13 @@ def group_points_by_grid(
 
 
 def inverse_distance_weighting(
-	data: T.Union[pd.DataFrame, pd.Series, gpd.GeoDataFrame] = None,
+	data: pd.DataFrame | pd.Series | gpd.GeoDataFrame = None,
 	lon_name: str = "lon",
 	lat_name: str = "lat",
 	value_name: str = "var",
-	lons: T.Union[pd.Series, np.ndarray, T.List] = None,
-	lats: T.Union[pd.Series, np.ndarray, T.List] = None,
-	values: T.Union[pd.Series, np.ndarray, T.List] = None,
+	lons: pd.Series | np.ndarray | list = None,
+	lats: pd.Series | np.ndarray | list = None,
+	values: pd.Series | np.ndarray | list = None,
 	lons_out: np.ndarray = None,
 	lats_out: np.ndarray = None,
 	k: int = 12,
@@ -574,7 +567,7 @@ def inverse_distance_weighting(
 	leafsize: int = 16,
 	return_type: str = "dataarray",
 ) -> xr.DataArray:
-	"""
+	r"""
 	Calculate the inverse-distance-weighted mean of (ir)regularly spaced 2-D data and return the mean on a regularly
 	spaced grid.
 
@@ -623,12 +616,12 @@ def inverse_distance_weighting(
 	if k < 2:
 		raise ValueError("k must be > 1")
 
-	if not isinstance(p, (float, int)):
+	if not isinstance(p, float | int):
 		raise TypeError(f"p is of type {type(p)} but must be of type {int} or {float}")
 	if p < 0.0:
 		raise ValueError("p must be positive (>0)")
 
-	if not isinstance(distance_upper_bound, (float, int)):
+	if not isinstance(distance_upper_bound, float | int):
 		raise TypeError(f"distance_upper_bound is of type {type(p)} but must be of type {int} or {float}")
 	if distance_upper_bound < 0.0:
 		raise ValueError("distance_upper_bound must be positive (>0)")
@@ -644,7 +637,7 @@ def inverse_distance_weighting(
 		values = np.array(values)
 	else:
 		lats, lons = tp.space.get_lat_lon_from_data(data, lon_name=lon_name, lat_name=lat_name, unique=False)
-		values = data[value_name].values
+		values = data[value_name].to_numpy()
 
 	if lons.ndim > 1:
 		raise TypeError(f"`lons` array is not 1-D (ndim={lons.ndim})")

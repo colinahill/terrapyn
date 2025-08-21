@@ -8,8 +8,6 @@ TODO:
 want data with monthly timesteps. A resampling operation should be carried out PRIOR to the rolling operation.
 """
 
-import typing as T
-
 import numpy as np
 import pandas as pd
 import scipy.stats as st
@@ -114,8 +112,8 @@ def _fit_gamma_pdf_dataarray(da: xr.DataArray = None, time_dim: str = "time") ->
 
 
 def _calc_gamma_cdf(
-	array: T.Union[pd.Series, np.ndarray] = None, shape: float = None, scale: float = None
-) -> T.Union[pd.Series, np.ndarray]:
+	array: pd.Series | np.ndarray = None, shape: float = None, scale: float = None
+) -> pd.Series | np.ndarray:
 	"""
 	Returns the Gamma CDF for values in a 1-D array, for the given shape and scale parameters,
 	where shape = alpha and scale = 1 / beta
@@ -181,9 +179,7 @@ def _calc_gamma_cdf_dataarray(
 	)
 
 
-def fit_gamma_pdf(
-	data: T.Union[pd.Series, xr.DataArray] = None, time_dim: str = "time"
-) -> T.Union[T.Tuple, xr.DataArray]:
+def fit_gamma_pdf(data: pd.Series | xr.DataArray = None, time_dim: str = "time") -> tuple | xr.DataArray:
 	"""
 	Fits a Gamma PDF to data and return the shape and scale parameters of the Gamma function,
 	where shape = alpha and scale = 1 / beta see
@@ -203,7 +199,7 @@ def fit_gamma_pdf(
 	Returns:
 		Shape and scale parameters for the fitted Gamma PDF
 	"""
-	if not isinstance(data, (pd.Series, xr.DataArray)):
+	if not isinstance(data, pd.Series | xr.DataArray):
 		raise TypeError("data must be of type pd.Series or xr.DataArray")
 
 	# Set negative values to zero
@@ -221,12 +217,12 @@ def fit_gamma_pdf(
 
 
 def calc_gamma_cdf(
-	data: T.Union[pd.Series, xr.DataArray] = None,
-	gamma_parameters: T.Union[T.Tuple, xr.Dataset] = None,
+	data: pd.Series | xr.DataArray = None,
+	gamma_parameters: tuple | xr.Dataset = None,
 	time_dim: str = "time",
 	shape_dim: str = "shape",
 	scale_dim: str = "scale",
-) -> T.Union[T.Tuple, xr.DataArray]:
+) -> tuple | xr.DataArray:
 	"""
 	Calculates a Gamma CDF for valus at each coordinate in a pd.Series or xr.DataArray using
 	the shape and scale parameters, where shape = alpha and scale = 1 / beta see
@@ -244,7 +240,7 @@ def calc_gamma_cdf(
 	Returns:
 		Parameters of the Gamma function CDF for the given values (shape and scale parameters).
 	"""
-	if not isinstance(data, (pd.Series, xr.DataArray)):
+	if not isinstance(data, pd.Series | xr.DataArray):
 		raise TypeError("data must be of type pd.Series or xr.DataArray")
 
 	if isinstance(data, pd.Series):
@@ -282,9 +278,7 @@ def _cdf_to_normal_ppf_dataarray(da: xr.DataArray = None, time_dim: str = "time"
 	)
 
 
-def cdf_to_normal_ppf(
-	data: T.Union[pd.Series, xr.DataArray] = None, time_dim: str = "time"
-) -> T.Union[pd.Series, xr.DataArray]:
+def cdf_to_normal_ppf(data: pd.Series | xr.DataArray = None, time_dim: str = "time") -> pd.Series | xr.DataArray:
 	"""
 	Apply the inverse normal distribution to a CDF to yield a normal PPF with mean = 0 and std = 1
 
@@ -296,7 +290,7 @@ def cdf_to_normal_ppf(
 	Returns:
 		The computed values of the inverse normal distribution for the given CDF
 	"""
-	if not isinstance(data, (pd.Series, xr.DataArray)):
+	if not isinstance(data, pd.Series | xr.DataArray):
 		raise TypeError("data must be of type pd.Series or xr.DataArray")
 
 	if isinstance(data, pd.Series):
@@ -311,12 +305,12 @@ def cdf_to_normal_ppf(
 
 
 def calc_spi(
-	data: T.Union[pd.Series, xr.DataArray] = None,
+	data: pd.Series | xr.DataArray = None,
 	n_months: int = 3,
-	gamma_parameters: T.Union[pd.Series, xr.DataArray] = None,
+	gamma_parameters: pd.Series | xr.DataArray = None,
 	return_gamma_params: bool = False,
 	time_dim: str = "time",
-) -> T.Union[pd.Series, xr.DataArray]:
+) -> pd.Series | xr.DataArray:
 	"""Calculate SPI, where `n_months` is the timescale of interest: 3 month SPI is used for a
 	short-term or seasonal drought index, 12 month SPI for an intermediate-term drought index,
 	and 48 month SPI for a long-term drought index.

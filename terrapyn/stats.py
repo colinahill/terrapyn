@@ -11,21 +11,21 @@ from scipy.special import rel_entr
 from terrapyn.logger import logger
 
 
-def _return_sorted_array(values: T.Union[float, int, np.ndarray, T.List]) -> np.ndarray:
+def _return_sorted_array(values: float | int | np.ndarray | list) -> np.ndarray:
 	"""Sort values or ensure value is an array"""
-	if isinstance(values, (T.List, np.ndarray)):
+	if isinstance(values, list | np.ndarray):
 		return np.sort(values)
 	else:
 		return np.array([values])
 
 
 def digitize(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, np.ndarray, T.List] = None,  # noqa: C901
-	bins: T.Union[float, int, np.ndarray, T.List] = [5, 10],
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | np.ndarray | list = None,  # noqa: C901
+	bins: float | int | np.ndarray | list = None,
 	closed_right: bool = False,
-	columns: T.Union[str, np.ndarray, T.List] = None,
+	columns: str | np.ndarray | list = None,
 	keep_attrs: bool = True,
-) -> T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, np.ndarray, T.List]:
+) -> xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | np.ndarray:
 	"""
 	Return the indices of the bins to which each value in the input data belongs. This function is essentially a
 	wrapper around numpy.digitize, and provides consistent usage for a variety of data structures.
@@ -44,7 +44,7 @@ def digitize(
 
 	Args:
 		data: Input data
-		bins: Array/list of values to use for thresholds.
+		bins: Array/list of values to use for thresholds. Default is [5, 10].
 		closed_right: Indicating whether the intervals include the right or the left bin edge.
 		By default, closed_right=False, meaning that the interval does not include the right edge.
 		columns: List of column names for which to apply the thresholding. Only used for pandas.Dataframe type.
@@ -65,9 +65,11 @@ def digitize(
 	>>> digitize(array, bins=3)
 	array([0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 	"""  # noqa: E101
+	if bins is None:
+		bins = [5, 10]
 	bins = _return_sorted_array(bins)
 
-	if isinstance(data, (np.ndarray, T.List)):
+	if isinstance(data, np.ndarray | list):
 		digitized_data = np.digitize(data, bins=bins, right=closed_right)
 
 	elif isinstance(data, pd.Series):
@@ -92,7 +94,7 @@ def digitize(
 			result.columns = columns
 		digitized_data = result
 
-	elif isinstance(data, (xr.DataArray, xr.Dataset)):
+	elif isinstance(data, xr.DataArray | xr.Dataset):
 		digitized_data = xr.apply_ufunc(
 			np.digitize,
 			data,
@@ -103,23 +105,23 @@ def digitize(
 		)
 	else:
 		allowed_types = ", ".join(
-			"{}".format(obj) for obj in [xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, np.ndarray, list]
+			f"{obj}" for obj in [xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, np.ndarray, list]
 		)
-		raise TypeError("'data' is of type {}, but must be one of type {}.".format(type(data), allowed_types))
+		raise TypeError(f"'data' is of type {type(data)}, but must be one of type {allowed_types}.")
 	return digitized_data
 
 
 def calculate_quantiles(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series = None,
 	q: T.Iterable = [0.25, 0.5, 0.75],
-	dim: T.Union[str, int] = None,
+	dim: str | int = None,
 	numeric_only: bool = False,
 	interpolation: str = "linear",
 	keep_attrs: bool = False,
 	skipna: bool = True,
 	add_rank_coord: bool = False,
 	starting_rank: int = 1,
-) -> T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series]:
+) -> xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series:
 	"""
 	Calculate quantiles for data over a given dimension. Essentially a wrapper around `xarray` and `pandas`
 	functions, with the option for adding a `rank` coordinate:
@@ -151,7 +153,7 @@ def calculate_quantiles(
 	if add_rank_coord:
 		rank = np.arange(starting_rank, starting_rank + len(q), dtype=int)
 
-	if isinstance(data, (xr.Dataset, xr.DataArray)):
+	if isinstance(data, xr.Dataset | xr.DataArray):
 		if isinstance(data, xr.DataArray):
 			quantiles = data.quantile(q=q, dim=dim, method=interpolation, keep_attrs=keep_attrs, skipna=skipna)
 		else:
@@ -171,7 +173,7 @@ def calculate_quantiles(
 		if dim is None or isinstance(dim, str):
 			dim = 0
 		# Ensure `q` is a list so we always have an index
-		if isinstance(q, (float, int)):
+		if isinstance(q, float | int):
 			q = [q]
 		quantiles = data.quantile(q=q, axis=dim, numeric_only=numeric_only)
 		if add_rank_coord:
@@ -182,7 +184,7 @@ def calculate_quantiles(
 			dim = 0
 		if add_rank_coord:
 			# Ensure `q` is a list so we always have an index
-			if isinstance(q, (float, int)):
+			if isinstance(q, float | int):
 				q = [q]
 			quantiles = data.quantile(q=q, interpolation=interpolation)
 			# Transform the Series to a DataFrame so we can have a rank column
@@ -197,8 +199,8 @@ def calculate_quantiles(
 
 
 def rank(
-	data: T.Union[xr.Dataset, xr.DataArray] = None, dim: str = "time", percent: bool = False, starting_rank: int = 1
-) -> T.Union[xr.Dataset, xr.DataArray]:
+	data: xr.Dataset | xr.DataArray = None, dim: str = "time", percent: bool = False, starting_rank: int = 1
+) -> xr.Dataset | xr.DataArray:
 	"""
 	Ranks data over the selected dimension. Equal values are assigned a rank
 	that is the average of the ranks that would have been otherwise assigned
@@ -229,9 +231,8 @@ def rank(
 		return ranked
 
 	# Check if data is stored as Dask array, and if so, re-chunk over the ranking dimension
-	if data.chunks is not None:
-		if len(data.chunks) > 0:
-			data = data.chunk({dim: -1})
+	if data.chunks is not None and len(data.chunks) > 0:
+		data = data.chunk({dim: -1})
 
 	ranked_data = xr.apply_ufunc(
 		_nan_rank,
@@ -277,15 +278,13 @@ def nearest_multiple(x, base: float = 0.5) -> np.ndarray:
 
 
 def sigma_clip(
-	data: T.Union[np.ndarray, pd.Series] = None,
-	low_sigma: T.Union[int, float] = 7,
-	upp_sigma: T.Union[int, float] = 7,
+	data: np.ndarray | pd.Series = None,
+	low_sigma: int | float = 7,
+	upp_sigma: int | float = 7,
 	n_iter: int = None,
 	return_flags: bool = True,
 	return_thresholds: bool = False,
-) -> T.Union[
-	T.Union[np.ndarray, pd.Series], T.Tuple[T.Union[np.ndarray, pd.Series], T.Optional[float], T.Optional[float]]
-]:
+) -> np.ndarray | pd.Series | tuple[np.ndarray | pd.Series, float | None, float | None]:
 	r"""
 	Calculates the mean and standard deviation (`std`) of an array, and detemines if the values lie outside
 	the range :math:`(mean - low_sigma * std)` to :math:`(mean + upp_sigma * std)`. `NaN` values are always
@@ -322,7 +321,7 @@ def sigma_clip(
 
 	# Ensure data is a 1-D array
 	if isinstance(data, pd.Series):
-		array = data.values
+		array = data.to_numpy()
 	elif isinstance(data, np.ndarray):
 		array = np.asarray(data).ravel()
 	else:
@@ -366,10 +365,7 @@ def sigma_clip(
 		else:
 			return mask
 	else:
-		if isinstance(data, pd.Series):
-			array = data[mask]
-		else:
-			array = array[mask]
+		array = data[mask] if isinstance(data, pd.Series) else array[mask]
 
 		if return_thresholds:
 			return array, lower, upper
@@ -377,14 +373,14 @@ def sigma_clip(
 			return array
 
 
-def normalize_weights(weights: T.Iterable) -> T.List:
+def normalize_weights(weights: T.Iterable) -> list:
 	"""
 	Normalize a list of weights so they sum to 1
 	"""
 	return [i / sum(weights) for i in weights]
 
 
-def min_max_of_arrays(a: T.Iterable, b: T.Iterable) -> T.Tuple:
+def min_max_of_arrays(a: T.Iterable, b: T.Iterable) -> tuple:
 	"""
 	Return a tuple of the minimum and maximum of two 1-D arrays
 	"""
@@ -426,7 +422,7 @@ def is_mirror(a: np.array, b: np.array) -> bool:
 	return bool(np.all(a == b_mirrored))
 
 
-def find_and_count_sequences(a: np.array) -> T.Tuple[np.array, int, bool]:
+def find_and_count_sequences(a: np.array) -> tuple[np.array, int, bool]:
 	"""
 	Find sequences in array `a` and count the number of times they occur.
 	Allows for incomplete sequences which are flagged, not counted.
