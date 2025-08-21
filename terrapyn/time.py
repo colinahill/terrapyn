@@ -93,17 +93,15 @@ def time_offset(
 
 
 def get_time_from_data(
-	data: T.Union[
-		xr.Dataset,
-		xr.DataArray,
-		pd.DataFrame,
-		pd.Series,
-		np.ndarray,
-		T.List,
-		dt.datetime,
-		pd.DatetimeIndex,
-		pd.MultiIndex,
-	] = None,
+	data: xr.Dataset
+	| xr.DataArray
+	| pd.DataFrame
+	| pd.Series
+	| np.ndarray
+	| list
+	| dt.datetime
+	| pd.DatetimeIndex
+	| pd.MultiIndex = None,
 	time_dim: str = "time",
 ) -> pd.DatetimeIndex:
 	"""
@@ -118,18 +116,15 @@ def get_time_from_data(
 		pd.DatetimeIndex of times in data
 	"""
 	# Perform data type checks and convert data to a pandas DatetimeIndex
-	if isinstance(data, (pd.Series, pd.DataFrame)):
+	if isinstance(data, pd.Series | pd.DataFrame):
 		# Check if `time_dim` is the index
 		if time_dim in data.index.names:
 			times = data.index.get_level_values(time_dim)
 		else:
-			if isinstance(data, pd.Series):
-				times = pd.DatetimeIndex(data)
-			else:
-				times = pd.DatetimeIndex(data[time_dim])
-	elif isinstance(data, (xr.Dataset, xr.DataArray)):
+			times = pd.DatetimeIndex(data) if isinstance(data, pd.Series) else pd.DatetimeIndex(data[time_dim])
+	elif isinstance(data, xr.Dataset | xr.DataArray):
 		times = data.indexes[time_dim]
-	elif isinstance(data, (np.ndarray, list)):
+	elif isinstance(data, np.ndarray | list):
 		times = pd.DatetimeIndex(data, name="time")
 	elif isinstance(data, dt.datetime):
 		times = pd.DatetimeIndex([data], name="time")
@@ -150,7 +145,7 @@ def get_time_from_data(
 				pd.DataFrame,
 				pd.Series,
 				np.ndarray,
-				T.List,
+				list,
 				dt.datetime,
 				pd.DatetimeIndex,
 			]
@@ -160,10 +155,10 @@ def get_time_from_data(
 
 
 def groupby_time(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series = None,
 	time_dim: str = "time",
 	grouping: str = "week",
-	other_grouping_keys: T.Optional[T.Union[str, T.List[str]]] = None,
+	other_grouping_keys: str | list[str] | None = None,
 ):
 	"""
 	Generate a `groupby` object where data are grouped by `time` and (optionally) `id`.
@@ -185,9 +180,9 @@ def groupby_time(
 	if grouping == "week":
 		time_groups = times.isocalendar().week
 	elif grouping == "month":
-		time_groups = times.month.values
+		time_groups = times.month.to_numpy()
 	elif grouping == "year":
-		time_groups = times.year.values
+		time_groups = times.year.to_numpy()
 	elif grouping == "dayofyear":
 		time_groups = get_day_of_year(times, time_dim, modify_ordinal_days=True)
 	elif grouping == "dekad":
@@ -198,9 +193,9 @@ def groupby_time(
 		raise ValueError("`grouping` must be one of 'dayofyear', 'week', 'month', 'year', 'pentad', 'dekad'")
 
 	if isinstance(time_groups, pd.Series):
-		time_groups = time_groups.values
+		time_groups = time_groups.to_numpy()
 
-	if isinstance(data, (xr.DataArray, xr.Dataset)):
+	if isinstance(data, xr.DataArray | xr.Dataset):
 		time_groups = xr.DataArray(time_groups, dims=time_dim, name=grouping)
 	else:
 		time_groups = pd.Index(data=time_groups, name=grouping)
@@ -217,16 +212,9 @@ def groupby_time(
 
 
 def get_day_of_year(
-	data: T.Union[
-		xr.Dataset,
-		xr.DataArray,
-		pd.DataFrame,
-		pd.Series,
-		np.ndarray,
-		T.List,
-		dt.datetime,
-		pd.DatetimeIndex,
-	] = None,
+	data: (
+		xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | np.ndarray | list | dt.datetime | pd.DatetimeIndex
+	) = None,
 	time_dim: str = "time",
 	modify_ordinal_days: bool = False,
 ) -> np.ndarray:
@@ -250,16 +238,16 @@ def get_day_of_year(
 	times = get_time_from_data(data, time_dim=time_dim)
 	if modify_ordinal_days:
 		march_or_later = (times.month >= 3) & times.is_leap_year
-		ordinal_day = times.dayofyear.values
+		ordinal_day = times.dayofyear.to_numpy()
 		modified_ordinal_day = ordinal_day
 		modified_ordinal_day[march_or_later] -= 1
 		return modified_ordinal_day
 	else:
-		return times.dayofyear.values
+		return times.dayofyear.to_numpy()
 
 
 def datetime_to_pentad_number(
-	times: T.Union[pd.DatetimeIndex, pd.Series, dt.datetime, T.List, np.ndarray] = None,
+	times: pd.DatetimeIndex | pd.Series | dt.datetime | list | np.ndarray = None,
 ) -> np.ndarray:
 	"""
 	Determine pentad number from a datetime object, where a pentad is a group
@@ -279,7 +267,7 @@ def datetime_to_pentad_number(
 
 
 def datetime_to_dekad_number(
-	dates: T.Union[pd.DatetimeIndex, pd.Series, dt.datetime, np.datetime64, T.List, np.ndarray] = None,
+	dates: pd.DatetimeIndex | pd.Series | dt.datetime | np.datetime64 | list | np.ndarray = None,
 ) -> np.ndarray:
 	"""
 	Determine dekad number from a datetime object, where a dekad is a group of 10 days, with 36 dekads in a year.
@@ -301,25 +289,25 @@ def datetime_to_dekad_number(
 		array([4])
 
 	"""
-	if isinstance(dates, (dt.datetime, np.datetime64)):
+	if isinstance(dates, dt.datetime | np.datetime64):
 		dates = [dates]
 	dates = pd.DatetimeIndex(dates)
 	count = np.digitize(dates.day, bins=[10, 20], right=True) + 1  # Add 1 since bins start at zero
 	dekads = (dates.month - 1) * 3 + count
-	return dekads.values
+	return dekads.to_numpy()
 
 
 def daily_date_range(
 	start_time: dt.datetime = None,
 	end_time: dt.datetime = None,
 	delta_days: int = None,
-	hours: T.Union[int, T.List[int]] = None,
+	hours: int | list[int] = None,
 	reset_time: bool = True,
 	ref_hour: int = 0,
 	ref_minutes: int = 0,
 	ref_seconds: int = 0,
 	ref_microseconds: int = 0,
-) -> T.List[dt.datetime]:
+) -> list[dt.datetime]:
 	"""
 	Generate a list of dates with a daily frequency, where a datetime objects is generated for each
 	given hour in `hours`. If `start_time` or `end_time` is `None` today's date is used.
@@ -419,10 +407,7 @@ def daily_date_range(
 
 	# If hours is given, set the hour of `end_time` to be the maximum hour
 	if hours is not None:
-		if isinstance(hours, int):
-			max_hour = hours
-		else:
-			max_hour = max(hours)
+		max_hour = hours if isinstance(hours, int) else max(hours)
 		end_time = end_time.replace(hour=max_hour)
 
 	return list(rrule.rrule(freq=rrule.DAILY, dtstart=start_time, until=end_time, byhour=hours))
@@ -433,7 +418,7 @@ def monthly_date_range(
 	end_time: dt.datetime = None,
 	delta_months: int = None,
 	reset_time: bool = True,
-) -> T.List[dt.datetime]:
+) -> list[dt.datetime]:
 	"""
 	Generate a list of dates with a frequency of 1 month. If `start_time` is `None` today's date is used.
 	If `delta_months` is given, a range of dates are generated using this monthly offset and the `start_time`.
@@ -500,7 +485,7 @@ def monthly_date_range(
 
 
 def add_day_of_year_variable(
-	data: T.Union[xr.Dataset, xr.DataArray] = None, time_dim: str = "time", modify_ordinal_days: bool = True
+	data: xr.Dataset | xr.DataArray = None, time_dim: str = "time", modify_ordinal_days: bool = True
 ) -> xr.Dataset:
 	"""
 	Assign a day of year variable to an xr.dataset/dataarray that optionally
@@ -525,8 +510,8 @@ def add_day_of_year_variable(
 
 
 def check_start_end_time_validity(
-	start_time: T.Union[dt.datetime, np.datetime64, pd.Timestamp] = None,
-	end_time: T.Union[dt.datetime, np.datetime64, pd.Timestamp] = None,
+	start_time: dt.datetime | np.datetime64 | pd.Timestamp = None,
+	end_time: dt.datetime | np.datetime64 | pd.Timestamp = None,
 	verbose: bool = False,
 ) -> bool:
 	"""
@@ -564,8 +549,8 @@ def list_timezones():
 
 
 def time_to_local_time(
-	times: T.Union[dt.datetime, pd.Timestamp, pd.DatetimeIndex] = None, timezone_name: str = "UTC"
-) -> T.Union[dt.datetime, pd.Timestamp, pd.DatetimeIndex]:
+	times: dt.datetime | pd.Timestamp | pd.DatetimeIndex = None, timezone_name: str = "UTC"
+) -> dt.datetime | pd.Timestamp | pd.DatetimeIndex:
 	"""
 	Apply a timezone / daylight-savings-time (dst) offset to a (naive) datetime object.
 	The datetimes in `times` are assumed to be in UTC if there are timezone-naive
@@ -611,7 +596,7 @@ def time_to_local_time(
 
 
 def _ensure_datetimeindex(
-	times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.DatetimeIndex] = None,
+	times: dt.datetime | T.Iterable[dt.datetime] | pd.DatetimeIndex = None,
 ) -> pd.DatetimeIndex:
 	"""
 	Ensure a dt.datetime, iterable of dt.datetime, or pd.DateTimeIndex is returned as a pd.DateTimeIndex
@@ -624,7 +609,7 @@ def _ensure_datetimeindex(
 		return pd.DatetimeIndex(times, name="time")
 
 
-def _datetime_to_UTC(times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.DatetimeIndex] = None) -> pd.DatetimeIndex:
+def _datetime_to_UTC(times: dt.datetime | T.Iterable[dt.datetime] | pd.DatetimeIndex = None) -> pd.DatetimeIndex:
 	"""
 	Ensure a datetime is timezone aware, set to UTC. `times` can be timezone-naive (where no `tz` has been set)
 	or have a timezone set.
@@ -646,7 +631,7 @@ def _datetime_to_UTC(times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.Dat
 
 
 def _datetimeindex_to_local_time_tz_aware(
-	times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.DatetimeIndex] = None, timezone_name: str = None
+	times: dt.datetime | T.Iterable[dt.datetime] | pd.DatetimeIndex = None, timezone_name: str = None
 ) -> pd.DatetimeIndex:
 	"""
 	Apply a timezone / daylight-savings-time (dst) offset to a datetime-like object. The Timestamps can be
@@ -671,7 +656,7 @@ def _datetimeindex_to_local_time_tz_aware(
 
 
 def _datetimeindex_to_local_time_tz_naive(
-	times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.DatetimeIndex] = None, timezone_name: str = None
+	times: dt.datetime | T.Iterable[dt.datetime] | pd.DatetimeIndex = None, timezone_name: str = None
 ) -> pd.DatetimeIndex:
 	"""
 	Apply a timezone / daylight-savings-time (dst) offset to a datetime-like object. The Timestamps are assumed
@@ -694,10 +679,10 @@ def _datetimeindex_to_local_time_tz_naive(
 
 
 def utc_offset_in_hours(
-	times: T.Union[dt.datetime, T.Iterable[dt.datetime], pd.DatetimeIndex, pd.Timestamp] = None,
+	times: dt.datetime | T.Iterable[dt.datetime] | pd.DatetimeIndex | pd.Timestamp = None,
 	timezone_name: str = None,
 	return_single_value: bool = True,
-) -> T.Union[float, T.List[float]]:
+) -> float | list[float]:
 	"""
 	Return the offset in (decimal) hours between UTC time and a local timezone, for a given datetime.
 	Assumes all datetimes in `times` have the same timezone.
@@ -718,12 +703,12 @@ def utc_offset_in_hours(
 
 
 def _set_time_in_data(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series = None,
 	time_dim: str = "time",
 	new_times: pd.DatetimeIndex = None,
 	set_time_to_midnight: bool = False,
 	hours_to_subtract: float = None,
-) -> T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series]:
+) -> xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series:
 	"""
 	Change the timestamps in the `time_dim` of `data`, optionally resetting the time to midnight (00:00:00),
 	or subtracting some number of hours (`hours_to_subtract`), or replacing with a new pd.DatatimeIndex.
@@ -758,10 +743,20 @@ def _set_time_in_data(
 
 
 def data_to_local_time(
-	data: T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series, np.ndarray, T.List, dt.datetime, pd.DatetimeIndex],
-	timezone_name: str = None,
+	data: (
+		pd.Series
+		| pd.DataFrame
+		| xr.Dataset
+		| xr.DataArray
+		| np.ndarray
+		| list
+		| dt.datetime
+		| pd.DatetimeIndex
+		| pd.MultiIndex
+	) = None,
+	timezone_name: str = "UTC",
 	time_dim: str = "time",
-):
+) -> pd.DatetimeIndex:
 	"""
 	Convert and replace times in data to the correct local time, for a given country.
 	By default returns original (unmodified) data.
@@ -794,19 +789,19 @@ def data_to_local_time(
 		times = get_time_from_data(data, time_dim=time_dim)
 		times = time_to_local_time(times, timezone_name)
 
-		if isinstance(data, (np.ndarray, list, dt.datetime, pd.DatetimeIndex)):
+		if isinstance(data, np.ndarray | list | dt.datetime | pd.DatetimeIndex):
 			return times
 		else:
 			return tp.utils.set_dim_values_in_data(data=data, values=times, dim=time_dim)
 
 
 def _resample_pandas_multiindex(
-	data: T.Union[pd.DataFrame, pd.Series] = None,
+	data: pd.DataFrame | pd.Series = None,
 	time_dim: str = "time",
 	freq: str = "D",
-	offset: T.Union[int, float] = None,
+	offset: int | float = None,
 	closed: str = "left",
-) -> T.Union[pd.DataFrame, pd.Series]:
+) -> pd.DataFrame | pd.Series:
 	"""
 	Resample a pd.Dataframe/Series with a pd.Multiindex, where we do not reduce over other index levels,
 	only `time_dim`.
@@ -864,7 +859,7 @@ def groupby_freq(
 	# The offset in hours to apply to the data to account for the day start hour
 	offset = pd.Timedelta(hours=day_start_hour)
 
-	if isinstance(data, (xr.DataArray, xr.Dataset)):
+	if isinstance(data, xr.DataArray | xr.Dataset):
 		# Bug with xarray.Dataset.resample where it ignores the `base` argument, so a workaround is
 		# implemented here, where the times are modified and `loffset` is used to re-label the time
 		# return _set_time_in_data(data, time_dim=time_dim, hours_to_subtract=day_start_hour).resample(
@@ -872,31 +867,32 @@ def groupby_freq(
 		# )
 		return data.resample({time_dim: freq}, offset=offset, closed=closed)
 
-	elif isinstance(data, (pd.Series, pd.DataFrame)):
+	elif isinstance(data, pd.Series | pd.DataFrame):
 		is_dim_in_index = tp.utils._dim_in_pandas_index(data.index, time_dim)
-
 		if is_dim_in_index:
-			is_multiindex = tp.utils._pandas_check_multiindex_type(data.index)
-
-			if is_multiindex:
+			if tp.utils._pandas_check_multiindex_type(data.index):
+				# Is multiindex
 				return _resample_pandas_multiindex(
 					data=data, time_dim=time_dim, freq=freq, offset=offset, closed=closed
 				)
 			else:
 				return data.groupby(pd.Grouper(level=time_dim, freq=freq, offset=offset, closed=closed))
 		else:
-			if isinstance(data, pd.DataFrame):
+			if isinstance(data, pd.Series):
+				raise ValueError("Cannot group by time in time if data is a pandas.Series")
+			elif isinstance(data, pd.DataFrame):
 				# time_dim not in index, look in columns for DataFrames
-				if time_dim in data.columns:
-					if other_grouping_keys is None:
-						return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
-					else:
-						other_grouping_keys = tp.utils.ensure_list(other_grouping_keys)
-						return data.groupby(
-							[pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_keys]
-						)
+				if time_dim not in data.columns:
+					raise ValueError(f"time_dim=`{time_dim}` not found in data")
 
-			raise ValueError(f"time_dim=`{time_dim}` not found in data")
+				if other_grouping_keys:
+					other_grouping_keys = tp.utils.ensure_list(other_grouping_keys)
+					return data.groupby(
+						[pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed), *other_grouping_keys]
+					)
+				else:
+					return data.groupby(pd.Grouper(key=time_dim, freq=freq, offset=offset, closed=closed))
+
 	else:
 		data_types_str = ", ".join(
 			str(i)
@@ -911,7 +907,7 @@ def groupby_freq(
 
 
 def resample_time(
-	data: T.Union[pd.DataFrame, pd.Series] = None,
+	data: pd.DataFrame | pd.Series = None,
 	time_dim: str = "time",
 	freq: str = "D",
 	closed: str = "left",
@@ -958,12 +954,12 @@ def resample_time(
 
 
 def rolling(
-	data: T.Union[pd.Series, xr.DataArray] = None,
+	data: pd.Series | xr.DataArray = None,
 	n_periods: int = 3,
 	min_periods: int = None,
 	method: str = "sum",
 	time_dim: str = "time",
-) -> T.Union[pd.Series, xr.DataArray]:
+) -> pd.Series | xr.DataArray:
 	"""
 	Calculate a rolling `method` over a window with `n_periods`, with minimum of `min_periods` in the window.
 	Works for both pd.DataFrame/Series and xr.DataArray/xr.Dataset
@@ -1081,7 +1077,7 @@ def yearly_date_range(
 	start_time: dt.datetime = None,
 	end_time: dt.datetime = None,
 	reset_time: bool = True,
-) -> T.List[dt.datetime]:
+) -> list[dt.datetime]:
 	"""
 	Generate a list of dates with a frequency of 1 year. If `reset_times==True`, the month, day
 	and time are ignored (only using the year values). This is useful if you want to include the
@@ -1125,7 +1121,7 @@ def select_time_range(data, start_time=None, end_time=None):
 	"""
 	Select a time range in data for pd.DataFrame, pd.Series, xr.DataArray, xr.Dataset
 	"""
-	if isinstance(data, (xr.DataArray, xr.Dataset)):
+	if isinstance(data, xr.DataArray | xr.Dataset):
 		return data.sel(time=slice(start_time, end_time))
 	elif isinstance(data, pd.DataFrame):
 		return data.loc[pd.IndexSlice[start_time:end_time, :], :]

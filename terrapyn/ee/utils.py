@@ -1,6 +1,5 @@
 import calendar
 import datetime as dt
-import typing as T
 
 import ee
 import geemap
@@ -9,8 +8,8 @@ from terrapyn.logger import logger
 
 
 def add_aggregated_bands(
-	img: T.Union[ee.Image, ee.ImageCollection], bands: T.List, aggregation: str = "mean", name: str = None
-) -> T.Union[ee.Image, ee.ImageCollection]:
+	img: ee.Image | ee.ImageCollection, bands: list, aggregation: str = "mean", name: str = None
+) -> ee.Image | ee.ImageCollection:
 	"""
 	Aggregate bands and add to original ee.Image / Collection, optionally renaming the band
 
@@ -58,7 +57,7 @@ def scale_monthly_values(img_col: ee.ImageCollection) -> ee.ImageCollection:
 
 
 def scale_image_bands(
-	img: ee.Image, band_names: T.List[str] = None, weight_dict: dict = None, default_weight: float = 1
+	img: ee.Image, band_names: list[str] = None, weight_dict: dict = None, default_weight: float = 1
 ) -> ee.Image:
 	"""
 	Multiply each band in an ee.Image by a dictionary of weights, where the key is the band name
@@ -115,7 +114,7 @@ def add_area_to_feature(feature, error_margin=1):
 	return feature.set({"area_m2": area})
 
 
-def mask_exclude_geometry(img: ee.Image, mask: T.Union[ee.Geometry, ee.Feature, ee.FeatureCollection]) -> ee.Image:
+def mask_exclude_geometry(img: ee.Image, mask: ee.Geometry | ee.Feature | ee.FeatureCollection) -> ee.Image:
 	"""
 	Set a mask on an image that excludes the geometry in `mask`.
 
@@ -130,7 +129,7 @@ def mask_exclude_geometry(img: ee.Image, mask: T.Union[ee.Geometry, ee.Feature, 
 	return img
 
 
-def mask_include(img: ee.Image, mask: T.Union[ee.Geometry, ee.Feature, ee.FeatureCollection]) -> ee.Image:
+def mask_include(img: ee.Image, mask: ee.Geometry | ee.Feature | ee.FeatureCollection) -> ee.Image:
 	"""
 	Set a mask on an image to include regions in `mask`.
 

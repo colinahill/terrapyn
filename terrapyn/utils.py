@@ -33,15 +33,10 @@ def split_number_into_parts(a: int = None, b: int = None):
 
 
 def set_dim_values_in_data(
-	data: T.Union[
-		xr.Dataset,
-		xr.DataArray,
-		pd.DataFrame,
-		pd.Series,
-	] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series = None,
 	values: T.Iterable = None,
 	dim: str = None,
-) -> T.Union[xr.Dataset, xr.DataArray, pd.DataFrame, pd.Series]:
+) -> xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series:
 	"""
 	Replaces the values of a dimension/variable/column/index named `dim` in
 	xarray or pandas data structures with the values in the iterable `values`.
@@ -54,12 +49,9 @@ def set_dim_values_in_data(
 	Returns:
 		Data with `dim` values replaced with `values`.
 	"""
-	if isinstance(data, (pd.Series, pd.DataFrame)):
+	if isinstance(data, pd.Series | pd.DataFrame):
 		if dim in data.index.names:
-			if isinstance(data.index, pd.MultiIndex):
-				data.index = data.index.set_levels(values, level=dim)
-			else:
-				data.index = values
+			data.index = data.index.set_levels(values, level=dim) if isinstance(data.index, pd.MultiIndex) else values
 		else:
 			if isinstance(data, pd.Series):
 				# Update values of series, not index
@@ -67,7 +59,7 @@ def set_dim_values_in_data(
 			else:
 				# update column of dataframe
 				data[dim] = values
-	elif isinstance(data, (xr.Dataset, xr.DataArray)):
+	elif isinstance(data, xr.Dataset | xr.DataArray):
 		data = data.assign_coords({dim: values})
 	else:
 		data_types_str = ", ".join(
@@ -84,13 +76,7 @@ def set_dim_values_in_data(
 
 
 def get_dim_values_from_data(
-	data: T.Union[
-		xr.Dataset,
-		xr.DataArray,
-		pd.DataFrame,
-		pd.Series,
-		pd.MultiIndex,
-	] = None,
+	data: xr.Dataset | xr.DataArray | pd.DataFrame | pd.Series | pd.MultiIndex = None,
 	dim: str = None,
 ) -> np.ndarray:
 	"""
@@ -108,26 +94,26 @@ def get_dim_values_from_data(
 	if not isinstance(dim, str) or len(dim) == 0:
 		raise ValueError("`dim` must be a string with length > 0")
 
-	if isinstance(data, (pd.Series, pd.DataFrame)):
+	if isinstance(data, pd.Series | pd.DataFrame):
 		# Check if `dim` is in the index
 		if dim in data.index.names:
-			return data.index.get_level_values(dim).values
+			return data.index.get_level_values(dim).to_numpy()
 		else:
 			if isinstance(data, pd.Series):
-				return data.values
+				return data.to_numpy()
 			elif dim in data.columns:
-				return data[dim].values
+				return data[dim].to_numpy()
 			else:
 				raise ValueError(f"`dim` of '{dim} not found in data")
-	elif isinstance(data, (xr.Dataset, xr.DataArray)):
+	elif isinstance(data, xr.Dataset | xr.DataArray):
 		if dim in data.variables:
-			return data.variables[dim].values
+			return data.variables[dim].to_numpy()
 		else:
 			raise ValueError(f"`dim` of '{dim} not found in data")
 	elif isinstance(data, pd.MultiIndex):
 		# Check if `dim` is the index
 		if dim in data.names:
-			return data.get_level_values(dim).values
+			return data.get_level_values(dim).to_numpy()
 		else:
 			raise ValueError(f"`dim` of {dim} not found in pd.Multindex")
 	else:
@@ -136,7 +122,7 @@ def get_dim_values_from_data(
 
 
 def pandas_to_geopandas(
-	df: pd.DataFrame, lat_col: str = "lat", lon_col: str = "lon", crs=None, *args, **kwargs
+	df: pd.DataFrame, lat_col: str = "lat", lon_col: str = "lon", crs=None, **kwargs
 ) -> gpd.GeoDataFrame:
 	"""
 	Convert a pandas.DataFrame to a geopandas.GeoDataFrame, adding a new geometry column
@@ -152,7 +138,7 @@ def pandas_to_geopandas(
 		Geopandas GeoDataFrame
 	"""
 	geometry = gpd.points_from_xy(df[lon_col], df[lat_col], crs=crs)
-	gdf = gpd.GeoDataFrame(df, geometry=geometry, *args, **kwargs)
+	gdf = gpd.GeoDataFrame(df, geometry=geometry, **kwargs)
 	return gdf
 
 
@@ -173,7 +159,7 @@ def _dim_in_pandas_index(index, dim):
 			return dim in index.name
 
 
-def ensure_list(a: T.Any = None) -> T.List[T.Any]:
+def ensure_list(a: T.Any = None) -> list[T.Any]:
 	"""
 	Ensure data `a` is a list if not None
 	"""
@@ -181,7 +167,7 @@ def ensure_list(a: T.Any = None) -> T.List[T.Any]:
 		return None
 	elif isinstance(a, list):
 		return a
-	elif isinstance(a, (str, int, float)):
+	elif isinstance(a, str | int | float):
 		return [a]
 	else:
 		return list(a)
@@ -202,7 +188,7 @@ def _call_resample_method(obj, method, **kwargs):
 		raise ValueError(f"method=`{method}` not implemented")
 
 
-def remove_list_elements(input_list: T.List = None, remove_list: T.List = None) -> T.List:
+def remove_list_elements(input_list: list = None, remove_list: list = None) -> list:
 	"""Removes all elements in `remove_list` from `input_list` and returns new list object"""
 	if input_list is not None and remove_list is not None:
 		# convert all single values to a list
@@ -224,7 +210,7 @@ def get_first_dictionary_value(dictionary: dict):
 	return next(iter(dictionary.values()))
 
 
-def get_indexes_of_items_in_list(input_list: T.List = None, items: T.List = None) -> T.List[int]:
+def get_indexes_of_items_in_list(input_list: list = None, items: list = None) -> list[int]:
 	"""Get the (first) index of each item in `items` in the list `input_list`"""
 	return [input_list.index(item) for item in items]
 
@@ -234,7 +220,7 @@ def utf8_len(s: str) -> int:
 	return len(s.encode("utf-8"))
 
 
-def ensure_string(s: T.Union[str, T.Iterable]) -> str:
+def ensure_string(s: str | T.Iterable) -> str:
 	"""Accepts a string or an iterable, and returns a string or the first element of the iterable"""
 	if isinstance(s, str):
 		return s

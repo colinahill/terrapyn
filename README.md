@@ -26,22 +26,19 @@ If you already have Python version `3.10` or later you can skip this step.
 
 ### Install
 
-#### Via Pip
 The package can be installed in an existing Python environment via pip:
 
 ```bash
 pip install terrapyn
 ```
 
-#### From Source
-Clone the repo and install the package:
+Or the repo can be cloned from source:
 
 ```bash
 git clone https://github.com/colinahill/terrapyn.git && cd terrapyn
 ```
 
-This project uses [Pixi](https://pixi.sh/) to manage dependencies, which should be installed first. Then, install the package with
+## Development
+This project uses [Astral uv](https://docs.astral.sh/uv/) to manage dependencies, which should be installed first. Then the environment is created with `uv venv`.
 
-```bash
-pixi install
-```
+A `Makefile` contains most/all of the required tools for code quality, testing and publishing. Run `make help` to see available commands.

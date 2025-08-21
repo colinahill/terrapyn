@@ -1,5 +1,4 @@
 import json
-import typing as T
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -9,7 +8,7 @@ import pandas as pd
 import shapely
 
 
-def load_json(filepath: T.Union[str, Path]) -> dict:
+def load_json(filepath: str | Path) -> dict:
 	with open(filepath, "rb") as fp:
 		return json.load(fp)
 
@@ -64,7 +63,7 @@ def kmz_to_geodataframe(filepath: Path = None) -> gpd.GeoDataFrame:
 	return df
 
 
-def geojson_to_single_shapely_geometry(geojson: T.Dict) -> T.Union[shapely.MultiPolygon, shapely.Polygon]:
+def geojson_to_single_shapely_geometry(geojson: dict) -> shapely.MultiPolygon | shapely.Polygon:
 	"""
 	Parse a geoJSON dictionary and convert and merge all features/geometries to a single (multi)polygon
 	"""
@@ -100,7 +99,7 @@ def geojson_to_single_shapely_geometry(geojson: T.Dict) -> T.Union[shapely.Multi
 	return shapely_geometry
 
 
-def geometry_to_shapely(geometry: T.Dict) -> shapely.Geometry:
+def geometry_to_shapely(geometry: dict) -> shapely.Geometry:
 	"""
 	Convert a geoJSON geometry fragment to a shapely shape object
 
@@ -113,7 +112,7 @@ def geometry_to_shapely(geometry: T.Dict) -> shapely.Geometry:
 	return shapely.geometry.shape(geometry)
 
 
-def shapely_to_geojson(geometry_shapely: shapely.Geometry) -> T.Dict:
+def shapely_to_geojson(geometry_shapely: shapely.Geometry) -> dict:
 	"""
 	Convert a shapely shape object to a geoJSON
 

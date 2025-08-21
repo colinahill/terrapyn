@@ -3,24 +3,22 @@ Module containing functionality to estimate reference evapotransporation (ETo), 
 potential evapotranspiration (PET), for a grass reference crop using the FAO-56 Penman-Monteith equation.
 """
 
-import typing as T
-
 import numpy as np
 import pandas as pd
 import xarray as xr
 
 
 def fao56_penman_monteith(
-	data: T.Union[xr.Dataset, pd.DataFrame] = None,
-	net_rad: T.Union[str, np.ndarray] = "net_rad",
-	t: T.Union[str, np.ndarray] = "2t",
-	ws: T.Union[str, np.ndarray] = "ws",
-	svp: T.Union[str, np.ndarray] = "svp",
-	avp: T.Union[str, np.ndarray] = "avp",
-	delta_svp: T.Union[str, np.ndarray] = "delta_svp",
-	psy: T.Union[str, np.ndarray] = "psy",
-	shf: T.Union[str, np.ndarray] = None,
-) -> T.Union[np.ndarray, pd.Series, xr.DataArray]:
+	data: xr.Dataset | pd.DataFrame = None,
+	net_rad: str | np.ndarray = "net_rad",
+	t: str | np.ndarray = "2t",
+	ws: str | np.ndarray = "ws",
+	svp: str | np.ndarray = "svp",
+	avp: str | np.ndarray = "avp",
+	delta_svp: str | np.ndarray = "delta_svp",
+	psy: str | np.ndarray = "psy",
+	shf: str | np.ndarray = None,
+) -> np.ndarray | pd.Series | xr.DataArray:
 	"""
 	Estimate reference evapotranspiration (ETo) from a hypothetical short grass reference surface using
 	the FAO-56 Penman-Monteith equation. Based on equation 6 in Allen et al (1998).
@@ -81,14 +79,13 @@ def fao56_penman_monteith(
 		df = data.to_dataframe(dim_order=dim_order)
 		df.index.names = dim_order
 	elif isinstance(data, pd.DataFrame):
-		if all([i in data.index.names for i in dim_order]):
-			df = data.reorder_levels(dim_order, axis=0)
-		else:
-			df = data
+		df = data.reorder_levels(dim_order, axis=0) if all([i in data.index.names for i in dim_order]) else data
 
 	# Check all required parameters are given
 	for name, argument_name in zip(
-		["net_rad", "t", "ws", "svp", "avp", "delta_svp", "psy"], [net_rad, t, ws, svp, avp, delta_svp, psy]
+		["net_rad", "t", "ws", "svp", "avp", "delta_svp", "psy"],
+		[net_rad, t, ws, svp, avp, delta_svp, psy],
+		strict=False,
 	):
 		if argument_name not in df.columns:
 			raise ValueError(f"Variable name {name}={argument_name} not found in `data`")
@@ -163,7 +160,9 @@ def _fao56_penman_monteith(net_rad, t, ws, svp, avp, delta_svp, psy, shf=0.0):
 
 	# Check all required parameters are given
 	for name, variable in zip(
-		["net_rad", "t", "ws", "svp", "avp", "delta_svp", "psy", "shf"], [net_rad, t, ws, svp, avp, delta_svp, psy, shf]
+		["net_rad", "t", "ws", "svp", "avp", "delta_svp", "psy", "shf"],
+		[net_rad, t, ws, svp, avp, delta_svp, psy, shf],
+		strict=False,
 	):
 		if variable is None:
 			raise ValueError(f"Parameter {name} is not given")

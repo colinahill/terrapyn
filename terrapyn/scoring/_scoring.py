@@ -9,8 +9,8 @@ import terrapyn as tp
 def score_df(
 	df: pd.DataFrame = None,
 	metric: str = "mae",
-	model_names: T.Union[str, T.List[str]] = None,
-	obs_names: T.Union[str, T.List[str]] = None,
+	model_names: str | list[str] = None,
+	obs_names: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 	axis: int = 0,
 ):
@@ -71,8 +71,8 @@ def score_df(
 
 
 def _set_to_nan_if_fewer_than_min_points(
-	x: T.Union[pd.DataFrame, pd.Series], min_points: int = None
-) -> T.Union[pd.DataFrame, pd.Series]:
+	x: pd.DataFrame | pd.Series, min_points: int = None
+) -> pd.DataFrame | pd.Series:
 	reject_mask = np.isfinite(x).sum() < min_points
 	x.loc[:, reject_mask] = np.nan
 	return x
@@ -80,15 +80,15 @@ def _set_to_nan_if_fewer_than_min_points(
 
 def grouped_scores(
 	df: pd.DataFrame = None,
-	metrics: T.Union[str, list] = "mae",
+	metrics: str | list = "mae",
 	groupby_time: bool = True,
 	time_dim: str = "time",
 	time_grouping: str = "month",
-	other_grouping_keys: T.Union[str, T.List[str]] = None,
+	other_grouping_keys: str | list[str] = None,
 	min_points: int = None,
-	model_names: T.Union[str, T.List[str]] = None,
-	obs_names: T.Union[str, T.List[str]] = None,
-	output_index_names: T.Union[str, T.List[str]] = None,
+	model_names: str | list[str] = None,
+	obs_names: str | list[str] = None,
+	output_index_names: str | list[str] = None,
 ) -> pd.DataFrame:
 	"""
 	Scores values in a Pandas DataFrame grouped by keys. Can compare single/multiple columns at once (in order),
@@ -153,6 +153,7 @@ def grouped_scores(
 			model_names=model_names,
 			obs_names=obs_names,
 			output_index_names=output_index_names,
+			include_groups=False,
 		)
 	else:
 		df_list = []
@@ -163,6 +164,7 @@ def grouped_scores(
 				model_names=model_names,
 				obs_names=obs_names,
 				output_index_names=output_index_names,
+				include_groups=False,
 			)
 
 			scores.columns = pd.MultiIndex.from_product(
@@ -171,13 +173,13 @@ def grouped_scores(
 
 			if groupby_time:
 				# `scores` has the `time_grouping` dimension as the as the first index (level=0)
-				scores.index.rename(time_grouping, level=0, inplace=True)
+				scores.index = scores.index.rename(time_grouping, level=0)
 
 			df_list.append(scores)
 
 		scores = pd.concat(df_list, axis=1)
-		scores.sort_index(axis=1, inplace=True)
+		scores = scores.sort_index(axis=1)
 
-	scores.sort_index(axis=0, inplace=True)
+	scores = scores.sort_index(axis=0)
 
 	return scores

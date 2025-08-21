@@ -1,12 +1,10 @@
-import typing as T
-
 import ee
 
 import terrapyn as tp
 
 
 def soilgrids(
-	params: T.List[str] = ["bdod", "cec", "cfvo", "clay", "sand", "silt", "nitrogen", "phh2o", "soc", "ocd", "ocs"],
+	params: list[str] | None = None,
 	return_horizon_mean: bool = False,
 	depth: int = 30,
 ):
@@ -27,12 +25,15 @@ def soilgrids(
 
 	Args:
 		params: List of parameters to return. Options are: 'bdod', 'cec', 'cfvo',
-		'clay', 'sand', 'silt', 'nitrogen', 'phh20', 'soc', 'ocd', 'ocs'.
+		'clay', 'sand', 'silt', 'nitrogen', 'phh2o', 'soc', 'ocd', 'ocs'. Default is all.
 		return_horizon_mean: If True, return the weighted mean over the range 0 - `depth` [cm]
 
 	Returns:
 		ee.Image with bands of the requested parameters
 	"""
+	if params is None:
+		params = ["bdod", "cec", "cfvo", "clay", "sand", "silt", "nitrogen", "phh2o", "soc", "ocd", "ocs"]
+
 	param_dict = {
 		"bdod": {
 			"param": "bdod_mean",
@@ -115,7 +116,7 @@ def soilgrids(
 
 		mean_images = []
 		for i, img in enumerate(images):
-			weight_dict = dict(zip(img.bandNames().getInfo(), horizon_weights))
+			weight_dict = dict(zip(img.bandNames().getInfo(), horizon_weights, strict=False))
 			mean_images.append(
 				tp.ee.stats.weighted_mean(img=img, weight_dict=weight_dict, output_bandname=f"{params[i]}")
 			)
@@ -178,7 +179,7 @@ def usda_soil_class(sand: ee.Image = None, silt: ee.Image = None, clay: ee.Image
 	# of clay is 30 or more.
 	soil_class = soil_class.where(
 		(clay.gte(7).And(clay.lt(20)).And(sand.gt(52)).And(silt.add(clay.multiply(2)).gte(30))).Or(
-			(clay.lt(7).And(silt.lt(50)).And(silt.add(clay.multiply(2)).gte(30)))
+			clay.lt(7).And(silt.lt(50)).And(silt.add(clay.multiply(2)).gte(30))
 		),
 		3,
 	)
@@ -189,7 +190,7 @@ def usda_soil_class(sand: ee.Image = None, silt: ee.Image = None, clay: ee.Image
 	# 27 percent clay; OR material has 50 to less than 80 percent silt and less
 	# than 12 percent clay.
 	soil_class = soil_class.where(
-		(silt.gte(50).And(clay.gte(12)).And(clay.lt(27))).Or((silt.gte(50).And(silt.lt(80)).And(clay.lt(12)))), 5
+		(silt.gte(50).And(clay.gte(12)).And(clay.lt(27))).Or(silt.gte(50).And(silt.lt(80)).And(clay.lt(12))), 5
 	)
 	# Silt - Material has 80 percent or more silt and less than 12 percent
 	# clay.

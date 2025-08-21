@@ -10,7 +10,7 @@ class TestPandasToGeoPandas(unittest.TestCase):
 	def test_geometry(self):
 		df = pd.DataFrame({"lon": [1, 2], "lat": [3, 4], "value": [5, 6]})
 		result = tp.utils.pandas_to_geopandas(df)
-		self.assertEqual([(point.x, point.y) for point in result["geometry"].values], [(1.0, 3.0), (2.0, 4.0)])
+		self.assertEqual([(point.x, point.y) for point in result["geometry"].to_numpy()], [(1.0, 3.0), (2.0, 4.0)])
 
 
 class TestSetDimValuesInData(unittest.TestCase):

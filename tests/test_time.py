@@ -191,15 +191,15 @@ class TestAddDayOfYearVariable(unittest.TestCase):
 
 	def test_dataset_modify_ordinal_days(self):
 		result = tp.time.add_day_of_year_variable(self.ds)
-		np.testing.assert_equal(result["dayofyear"].values[58:62], np.array([59, 60, 60, 61]))
+		np.testing.assert_equal(result["dayofyear"].to_numpy()[58:62], np.array([59, 60, 60, 61]))
 
 	def test_dataset_no_modify_ordinal_days(self):
 		result = tp.time.add_day_of_year_variable(self.ds, modify_ordinal_days=False)
-		np.testing.assert_equal(result["dayofyear"].values[58:62], np.array([59, 60, 61, 62]))
+		np.testing.assert_equal(result["dayofyear"].to_numpy()[58:62], np.array([59, 60, 61, 62]))
 
 	def test_dataarray(self):
 		result = tp.time.add_day_of_year_variable(self.ds["var"], modify_ordinal_days=False)
-		np.testing.assert_equal(result["dayofyear"].values[58:62], np.array([59, 60, 61, 62]))
+		np.testing.assert_equal(result["dayofyear"].to_numpy()[58:62], np.array([59, 60, 61, 62]))
 
 
 class TestCheckStartEndTimeValidity(unittest.TestCase):
@@ -296,7 +296,7 @@ class TestDataToLocalTime(unittest.TestCase):
 		pd.testing.assert_index_equal(results, self.expected)
 
 	def test_series_values(self):
-		results = tp.time.data_to_local_time(pd.Series(self.expected), "CET").values
+		results = tp.time.data_to_local_time(pd.Series(self.expected), "CET").to_numpy()
 		np.testing.assert_equal(results, pd.Series(self.expected) + pd.Timedelta("1h"))
 
 	def test_dataset(self):
@@ -320,7 +320,7 @@ class TestDataToLocalTime(unittest.TestCase):
 		pd.testing.assert_index_equal(results, self.expected)
 
 	def test_ndarray(self):
-		results = tp.time.data_to_local_time(self.expected.values - np.timedelta64(1, "h"), "CET")
+		results = tp.time.data_to_local_time(self.expected.to_numpy() - np.timedelta64(1, "h"), "CET")
 		pd.testing.assert_index_equal(results, self.expected)
 
 	def test_list(self):
@@ -476,27 +476,27 @@ class TestGroupbyFreq(unittest.TestCase):
 	)
 
 	def test_dataset(self):
-		result = tp.time.groupby_freq(self.ds, freq="ME").sum()["var"].values.flatten()
+		result = tp.time.groupby_freq(self.ds, freq="ME").sum()["var"].to_numpy().flatten()
 		expected = np.array([30.0, 28.0, 31.0, 11.0])
 		np.testing.assert_array_equal(result, expected)
 
 	def test_dataarray(self):
-		result = tp.time.groupby_freq(self.ds["var"], freq="ME").sum().values.flatten()
+		result = tp.time.groupby_freq(self.ds["var"], freq="ME").sum().to_numpy().flatten()
 		expected = np.array([30.0, 28.0, 31.0, 11.0])
 		np.testing.assert_array_equal(result, expected)
 
 	def test_dataframe(self):
-		result = tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="ME").sum()["var"].values
+		result = tp.time.groupby_freq(self.ds["var"].to_dataframe(), freq="ME").sum()["var"].to_numpy()
 		expected = np.array([30.0, 28.0, 31.0, 11.0])
 		np.testing.assert_array_equal(result, expected)
 
 	def test_series(self):
-		result = tp.time.groupby_freq(self.ds["var"].to_series(), freq="ME").sum().values
+		result = tp.time.groupby_freq(self.ds["var"].to_series(), freq="ME").sum().to_numpy()
 		expected = np.array([30.0, 28.0, 31.0, 11.0])
 		np.testing.assert_array_equal(result, expected)
 
 	def test_dataset_hourly_to_daily(self):
-		result = tp.time.groupby_freq(self.ds_hourly, freq="D", day_start_hour=6).sum()["var"].values.flatten()
+		result = tp.time.groupby_freq(self.ds_hourly, freq="D", day_start_hour=6).sum()["var"].to_numpy().flatten()
 		expected = np.array([15, 420, 996, 1572, 1947])
 		np.testing.assert_array_equal(result, expected)
 
@@ -524,7 +524,9 @@ class TestGroupbyFreq(unittest.TestCase):
 
 	def test_dataframe_time_column(self):
 		result = (
-			tp.time.groupby_freq(self.ds["var"].to_dataframe().reset_index(drop=False), freq="ME").sum()["var"].values
+			tp.time.groupby_freq(self.ds["var"].to_dataframe().reset_index(drop=False), freq="ME")
+			.sum()["var"]
+			.to_numpy()
 		)
 		expected = np.array([30.0, 28.0, 31.0, 11.0])
 		np.testing.assert_array_equal(result, expected)
@@ -535,7 +537,7 @@ class TestGroupbyFreq(unittest.TestCase):
 				self.ds_hourly_multicoord.to_dataframe().reset_index(drop=False), freq="D", other_grouping_keys="lat"
 			)
 			.sum()["lon"]
-			.values
+			.to_numpy()
 		)
 		expected = np.array([168, 168, 168, 168, 168, 168, 168, 168, 28, 28])
 		np.testing.assert_array_equal(result, expected)
@@ -554,19 +556,19 @@ class TestResampleTime(unittest.TestCase):
 	def test_dataset_sum(self):
 		result = tp.time.resample_time(self.ds_hourly, freq="D", day_start_hour=6, resample_method="sum")
 		expected = np.array([15, 420, 996, 1572, 1947])
-		self.assertEqual(result["time"].values[0], np.datetime64("2021-12-31T06:00:00.00"))
-		np.testing.assert_array_equal(result["var"].values.flatten(), expected)
+		self.assertEqual(result["time"].to_numpy()[0], np.datetime64("2021-12-31T06:00:00.00"))
+		np.testing.assert_array_equal(result["var"].to_numpy().flatten(), expected)
 
 	def test_dataset_mean(self):
-		result = tp.time.resample_time(self.ds_hourly, resample_method="mean")["var"].values.flatten()
+		result = tp.time.resample_time(self.ds_hourly, resample_method="mean")["var"].to_numpy().flatten()
 		np.testing.assert_array_equal(result, np.array([11.5, 35.5, 59.5, 83.5, 97.5]))
 
 	def test_dataset_max(self):
-		result = tp.time.resample_time(self.ds_hourly, resample_method="max")["var"].values.flatten()
+		result = tp.time.resample_time(self.ds_hourly, resample_method="max")["var"].to_numpy().flatten()
 		np.testing.assert_array_equal(result, np.array([23, 47, 71, 95, 99]))
 
 	def test_dataset_min(self):
-		result = tp.time.resample_time(self.ds_hourly, resample_method="min")["var"].values.flatten()
+		result = tp.time.resample_time(self.ds_hourly, resample_method="min")["var"].to_numpy().flatten()
 		np.testing.assert_array_equal(result, np.array([0, 24, 48, 72, 96]))
 
 	def test_method_not_implemented(self):

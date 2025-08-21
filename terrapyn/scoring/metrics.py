@@ -6,7 +6,7 @@ import xarray as xr
 
 from terrapyn.utils import ensure_list
 
-VALUES_AND_ARRAY_LIKE = T.Union[float, int, np.ndarray, T.List, pd.Series, pd.DataFrame]
+VALUES_AND_ARRAY_LIKE = float | int | np.ndarray | list | pd.Series | pd.DataFrame
 
 
 def error(x: VALUES_AND_ARRAY_LIKE, y: VALUES_AND_ARRAY_LIKE) -> VALUES_AND_ARRAY_LIKE:
@@ -20,9 +20,9 @@ def error(x: VALUES_AND_ARRAY_LIKE, y: VALUES_AND_ARRAY_LIKE) -> VALUES_AND_ARRA
 	Returns:
 		The error, in the same format as the input arrays
 	"""
-	if isinstance(x, (pd.Series, pd.DataFrame)):
-		if isinstance(y, (pd.Series, pd.DataFrame)):
-			y = y.values
+	if isinstance(x, pd.Series | pd.DataFrame):
+		if isinstance(y, pd.Series | pd.DataFrame):
+			y = y.to_numpy()
 		return x.subtract(y, axis=0)
 	else:
 		return x - y
@@ -191,8 +191,8 @@ def bias_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None
 	Returns:
 		Bias
 	"""
-	model_values = model.values
-	obs_values = observations.values
+	model_values = model.to_numpy()
+	obs_values = observations.to_numpy()
 	return bias(model_values, obs_values)
 
 
@@ -243,8 +243,8 @@ def me_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None, 
 
 def error_df(
 	df: pd.DataFrame = None,
-	model_name: T.Union[str, T.List[str]] = None,
-	obs_name: T.Union[str, T.List[str]] = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 ) -> pd.DataFrame:
 	"""
@@ -278,7 +278,7 @@ def error_df(
 	if dims_equal:
 		score = error(df[model_name], df[obs_name])
 		if generate_index_names:
-			output_index_names = [f"{i}_{j}" for i, j in zip(model_name, obs_name)]
+			output_index_names = [f"{i}_{j}" for i, j in zip(model_name, obs_name, strict=False)]
 		score.columns = output_index_names
 	else:
 		# Multiple models/predictions and fewer truth/observation columns. Scores are computed
@@ -303,8 +303,8 @@ def error_df(
 
 def mae_df(
 	df: pd.DataFrame = None,
-	model_name: T.Union[str, T.List[str]] = None,
-	obs_name: T.Union[str, T.List[str]] = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 	axis: int = 0,
 ) -> pd.DataFrame:
@@ -331,8 +331,8 @@ def mae_df(
 
 def mse_df(
 	df: pd.DataFrame = None,
-	model_name: T.Union[str, T.List[str]] = None,
-	obs_name: T.Union[str, T.List[str]] = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 	axis: int = 0,
 ) -> pd.DataFrame:
@@ -359,8 +359,8 @@ def mse_df(
 
 def me_df(
 	df: pd.DataFrame = None,
-	model_name: T.Union[str, T.List[str]] = None,
-	obs_name: T.Union[str, T.List[str]] = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 	axis: int = 0,
 ) -> pd.DataFrame:
@@ -387,8 +387,8 @@ def me_df(
 
 def rmse_df(
 	df: pd.DataFrame = None,
-	model_name: T.Union[str, T.List[str]] = None,
-	obs_name: T.Union[str, T.List[str]] = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 	axis: int = 0,
 ) -> pd.DataFrame:
@@ -412,8 +412,8 @@ def rmse_df(
 
 def bias_df(
 	df: pd.DataFrame = None,
-	model_name: T.Union[str, T.List[str]] = None,
-	obs_name: T.Union[str, T.List[str]] = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 ) -> pd.DataFrame:
 	"""
@@ -438,16 +438,16 @@ def bias_df(
 	sum_obs = df[obs_name].sum(axis=0, skipna=True)
 
 	if dims_equal:
-		score = sum_models / sum_obs.values
+		score = sum_models / sum_obs.to_numpy()
 		if output_index_names is None:
-			output_index_names = [f"{i}_{j}" for i, j in zip(model_name, obs_name)]
+			output_index_names = [f"{i}_{j}" for i, j in zip(model_name, obs_name, strict=False)]
 		score.index = output_index_names
 	else:
 		# Multiple models/predictions and fewer truth/observation columns. Scores are computed
 		# between all models and the first observation column, then all models and the second observation column etc.
 		df_list = []
 		for col in obs_name:
-			score = sum_models / sum_obs.loc[[col]].values
+			score = sum_models / sum_obs.loc[[col]].to_numpy()
 			if output_index_names is None:
 				output_index_names = [f"{i}_{col}" for i in model_name]
 				score.index = output_index_names
@@ -462,8 +462,8 @@ def bias_df(
 
 def efficiency_df(
 	df: pd.DataFrame = None,
-	model_name: T.Union[str, T.List[str]] = None,
-	obs_name: T.Union[str, T.List[str]] = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
 ) -> pd.DataFrame:
 	"""
@@ -487,10 +487,13 @@ def efficiency_df(
 		# loop over pairs of columns
 		score_list = []
 		index = []
-		for i, (mod, obs) in enumerate(zip(model_name, obs_name)):
+		for mod, obs in zip(model_name, obs_name, strict=False):
 			score = efficiency(df[mod], df[obs])
 			score_list.append(score)
 			index.append(f"{mod}_{obs}")
+		output_index_names = index if output_index_names is None else ensure_list(output_index_names)
+		score = pd.Series(score_list, index=output_index_names, name="efficiency")
+		return score
 	else:
 		# loop over models, for each obs
 		score_list = []
@@ -500,12 +503,9 @@ def efficiency_df(
 				score = efficiency(df[mod], df[obs])
 				score_list.append(score)
 				index.append(f"{mod}_{obs}")
-	if output_index_names is None:
-		output_index_names = index
-	else:
-		output_index_names = ensure_list(output_index_names)
-	score = pd.Series(score_list, index=output_index_names, name="efficiency")
-	return score
+		output_index_names = index if output_index_names is None else ensure_list(output_index_names)
+		score = pd.Series(score_list, index=output_index_names, name="efficiency")
+		return score
 
 
 def _check_dims_and_compute_error(
@@ -536,16 +536,13 @@ def _check_dims_and_compute_error(
 				axis = 0
 			n = model_dims
 		else:
-			if isinstance(model_dims, int):
-				n = model_dims
-			else:
-				n = model_dims[0]
+			n = model_dims if isinstance(model_dims, int) else model_dims[0]
 		return n, error(model, observations)
 	else:
-		raise ValueError("Data dimensions are not equal, cannot compute error {} vs {}".format(model_dims, obs_dims))
+		raise ValueError(f"Data dimensions are not equal, cannot compute error {model_dims} vs {obs_dims}")
 
 
-def _get_matching_finite_values(x: T.Iterable, y: T.Iterable) -> T.Tuple[T.Iterable, T.Iterable]:
+def _get_matching_finite_values(x: T.Iterable, y: T.Iterable) -> tuple[T.Iterable, T.Iterable]:
 	"""
 	Find overlapping finite (non-NaN) values for two input arrays
 
@@ -562,11 +559,11 @@ def _get_matching_finite_values(x: T.Iterable, y: T.Iterable) -> T.Tuple[T.Itera
 	return x[mask], y[mask]
 
 
-def _get_dimensionality(values) -> T.Tuple:
+def _get_dimensionality(values) -> tuple:
 	"""Get dimensions of data. Returns 1 for single values, otherwise the shape"""
-	if isinstance(values, (str, float, int)):
+	if isinstance(values, str | float | int):
 		return 1
-	elif isinstance(values, (pd.Series, pd.DataFrame, np.ndarray, T.List)):
+	elif isinstance(values, pd.Series | pd.DataFrame | np.ndarray | list):
 		shape = np.shape(values)
 		if len(shape) == 1:
 			return shape[0]
@@ -580,7 +577,7 @@ def _check_dimensions_are_equal(
 	calc_dims: bool = True,
 	return_dims: bool = True,
 	verbose: bool = False,
-) -> (bool, T.Optional[T.Tuple], T.Optional[T.Tuple]):
+) -> (bool, tuple | None, tuple | None):
 	"""
 	Check that the dimensions of two arrays (or values) are equal.
 
@@ -618,7 +615,6 @@ def _check_dimensions_are_equal(
 
 def _check_dims_compatible_with_length_of_list(model_list, obs_list, output_index_names: list = None):
 	dims_equal, n_models, n_obs = _check_dimensions_are_equal(model_list, obs_list, calc_dims=True, return_dims=True)
-	if not dims_equal and output_index_names is not None:
-		if len(output_index_names) != n_models * n_obs:
-			raise ValueError("Length of `output_index_names` does not match the number of output columns")
+	if not dims_equal and output_index_names is not None and len(output_index_names) != n_models * n_obs:
+		raise ValueError("Length of `output_index_names` does not match the number of output columns")
 	return dims_equal, n_models, n_obs

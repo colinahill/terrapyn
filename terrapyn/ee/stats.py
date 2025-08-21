@@ -8,7 +8,7 @@ import terrapyn as tp
 def image_percentiles(
 	img: ee.Image,
 	geometry: ee.Geometry,
-	percentiles: T.List[int] = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+	percentiles: list[int] | None = None,
 	scale: float = 5000,
 	**kwargs,
 ) -> dict:
@@ -19,6 +19,7 @@ def image_percentiles(
 		img: ee.Image
 		geometry: ee.Geometry
 		percentiles: List of percentiles to calculate. Must be integers between 0 and 100.
+		Default is [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].
 		scale: Image scale to compute the percentiles.
 		kwargs: Additional arguments to pass to ee.Image.reduceRegion()
 
@@ -28,6 +29,8 @@ def image_percentiles(
 	# Check is an ee.Image
 	if not isinstance(img, ee.Image):
 		raise ValueError("img must be an ee.Image")
+	if percentiles is None:
+		percentiles = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 	percentile_labels = [f"p{i:02d}" for i in percentiles]
 	pct = img.rename("img").reduceRegion(
 		reducer=ee.Reducer.percentile(percentiles=percentiles, outputNames=percentile_labels),
@@ -77,7 +80,7 @@ def image_min_max(img: ee.Image, geometry: ee.Geometry, scale: float = 250, **kw
 	return min_max.getInfo()
 
 
-def bin_values(img: ee.Image, bins: T.List) -> ee.Image:
+def bin_values(img: ee.Image, bins: list) -> ee.Image:
 	"""
 	Bin values in an ee.Image, where the pixel label is the index in `bins` where the value is greater
 	than that bin but less than the next bin.
@@ -99,7 +102,7 @@ def bin_values(img: ee.Image, bins: T.List) -> ee.Image:
 	return img.gt(thresholds).reduce("sum").subtract(1).rename("class")
 
 
-def bin_and_remap(img: ee.Image, bins: T.List, labels: T.List, default_value=None) -> ee.Image:
+def bin_and_remap(img: ee.Image, bins: list, labels: list, default_value=None) -> ee.Image:
 	"""
 	Bin values in an image and apply a label, where the label corresponds to where the value is greater than the
 	bin but less than the next bin. If no mapping exists, the default_value is used.
@@ -232,16 +235,16 @@ def weighted_mean(img, weight_dict, output_bandname="mean"):
 	# Normalize weights so they sum to 1
 	weights = tp.stats.normalize_weights(weights)
 
-	weights_dict = dict(zip(bands, weights))
+	weights_dict = dict(zip(bands, weights, strict=False))
 	return tp.ee.utils.scale_image_bands(img, weight_dict=weights_dict).reduce("sum").rename(output_bandname)
 
 
-def _layer_weights(layer_tops: T.Iterable, layer_bottoms: T.Iterable, total_depth: float = 30) -> T.List:
+def _layer_weights(layer_tops: T.Iterable, layer_bottoms: T.Iterable, total_depth: float = 30) -> list:
 	"""
 	Calculate a weighting for each layer based on thickness and range overlap, typically used for soil horizons
 	"""
 	weights = []
-	for top, bottom in zip(layer_tops, layer_bottoms):
+	for top, bottom in zip(layer_tops, layer_bottoms, strict=False):
 		overlap = min(total_depth, bottom) - max(0, top)
 		# if depth range doesn't overlap, weight = 0
 		weights.append(overlap if overlap > 0 else 0)

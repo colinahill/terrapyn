@@ -195,16 +195,16 @@ class ConfusionMatrix:
 
 	def plot_cm(
 		self,
-		figsize: T.Tuple[int, int] = (6, 6),
-		labels: T.List[str] = None,
+		figsize: tuple[int, int] = (6, 6),
+		labels: list[str] = None,
 		title: str = None,
-		annotate: T.Union[int, None] = None,
+		annotate: int | None = None,
 		colorbar: bool = False,
 		cbar_label: str = None,
 		cmap: str = "viridis",
-		title_fontdict=dict(size=12, weight="heavy"),
-		tick_fontdict=dict(size=12, weight="medium"),
-		label_fontdict=dict(size=12, weight="medium"),
+		title_fontdict: dict = None,
+		tick_fontdict: dict = None,
+		label_fontdict: dict = None,
 		labelpad: int = 8,
 		**kwargs,
 	):
@@ -245,6 +245,13 @@ class ConfusionMatrix:
 		else:
 			cbar = None
 			cbar_kws = None
+
+		if title_fontdict is None:
+			title_fontdict = dict(size=12, weight="heavy")
+		if tick_fontdict is None:
+			tick_fontdict = dict(size=12, weight="medium")
+		if label_fontdict is None:
+			label_fontdict = dict(size=12, weight="medium")
 
 		sns.heatmap(
 			self.cm,
