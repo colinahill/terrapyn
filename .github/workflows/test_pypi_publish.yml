@@ -6,17 +6,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  publish-test-pypi:
     runs-on: ubuntu-latest
     environment: release
     permissions:
       contents: read
       id-token: write
     steps:
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v4
         with:
           enable-cache: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
       - name: Build package
         run: make build
       - name: Publish to TestPyPI
