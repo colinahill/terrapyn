@@ -15,10 +15,11 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v4
         with:
           enable-cache: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
       - name: Build package
         run: make build
       - name: Publish to PyPI
