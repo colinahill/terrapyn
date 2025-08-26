@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-test-pypi:
+  build:
     runs-on: ubuntu-latest
     environment: release
     permissions:

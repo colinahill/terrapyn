@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-pypi:
+  build:
     # Skip this job if it's a pre-release
     if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
