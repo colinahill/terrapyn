@@ -1,6 +1,6 @@
 [project]
 name = "terrapyn"
-version = "0.2.0"
+version = "0.3.0"
 description = "Toolkit to manipulate Earth observations and models."
 authors = [{name = "Colin Hill", email = "colinalastairhill@gmail.com"}]
 readme = "README.md"
@@ -33,10 +33,6 @@ dependencies = [
 	"tqdm>=4.67.1",
 	"jupyterlab>=4.4.6",
 	"rioxarray>=0.19.0",
-	"earthengine-api>=1.6.4",
-	"geemap>=0.36.1",
-	"google-cloud-bigquery>=3.36.0",
-	"db-dtypes>=1.4.3",
 	"scikit-learn>=1.7.1",
 	"seaborn>=0.13.2",
 	"odc-geo>=0.4.10",
@@ -119,5 +115,4 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-# Ignore earth engine directory 'ee'
-addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes --ignore=terrapyn/ee"
+addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes"

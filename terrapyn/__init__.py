@@ -1,10 +1,8 @@
 import importlib.metadata
 
 from . import (
-	bq,
 	conversion,
 	dask_utils,
-	# ee,
 	indices,
 	io,
 	logger,
@@ -28,9 +26,7 @@ __all__ = [
 	"space",
 	"params",
 	"io",
-	# "ee",
 	"logger",
-	"bq",
 	"scoring",
 ]
 
