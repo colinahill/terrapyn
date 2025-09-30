@@ -28,6 +28,31 @@ def error(x: VALUES_AND_ARRAY_LIKE, y: VALUES_AND_ARRAY_LIKE) -> VALUES_AND_ARRA
 		return x - y
 
 
+def r2(model: VALUES_AND_ARRAY_LIKE = None, observations: VALUES_AND_ARRAY_LIKE = None) -> VALUES_AND_ARRAY_LIKE:
+	"""
+	Calculate R^2 between two values/arrays.
+
+	Args:
+		model: Forecast/Satellite/Model values
+		observations: Observations values
+
+	Returns:
+		R^2
+	"""
+	return np.corrcoef(model, observations)[0, 1] ** 2
+
+
+def normalized_root_mean_squared_error(
+	model: VALUES_AND_ARRAY_LIKE = None,
+	observations: VALUES_AND_ARRAY_LIKE = None,
+	axis=None,
+) -> VALUES_AND_ARRAY_LIKE:
+	"""
+	Calculate Normalized Root Mean Squared Error between two values/arrays.
+	"""
+	return root_mean_squared_error(model, observations, axis=axis) / np.nanmean(observations, axis=axis)
+
+
 def root_mean_squared_error(
 	model: VALUES_AND_ARRAY_LIKE = None,
 	observations: VALUES_AND_ARRAY_LIKE = None,
@@ -45,6 +70,17 @@ def root_mean_squared_error(
 		Root Mean squared error
 	"""
 	return np.sqrt(mean_squared_error(model, observations, axis=axis))
+
+
+def normalized_mean_squared_error(
+	model: VALUES_AND_ARRAY_LIKE = None,
+	observations: VALUES_AND_ARRAY_LIKE = None,
+	axis=None,
+) -> VALUES_AND_ARRAY_LIKE:
+	"""
+	Calculate Normalized Mean Squared Error between two values/arrays.
+	"""
+	return mean_squared_error(model, observations, axis=axis) / np.nanmean(observations, axis=axis)
 
 
 def mean_squared_error(
@@ -85,6 +121,17 @@ def mean_error(
 	n, error = _check_dims_and_compute_error(model, observations, axis)
 	if error is not None:
 		return np.sum(error, axis=axis) / n
+
+
+def normalized_mean_absolute_error(
+	model: VALUES_AND_ARRAY_LIKE = None,
+	observations: VALUES_AND_ARRAY_LIKE = None,
+	axis=None,
+) -> VALUES_AND_ARRAY_LIKE:
+	"""
+	Calculate Normalized Mean Absolute Error between two values/arrays.
+	"""
+	return mean_absolute_error(model, observations, axis=axis) / np.nanmean(observations, axis=axis)
 
 
 def mean_absolute_error(
@@ -164,6 +211,15 @@ def skill_score(reference, test):
 	return 1.0 - test / reference
 
 
+def normalized_mae_dataarray(
+	model: xr.DataArray = None, observations: xr.DataArray = None, dim: str = "time"
+) -> xr.DataArray:
+	"""
+	Calculate Normalized Mean Absolute Error between two xr.DataArrays
+	"""
+	return mae_dataarray(model, observations, dim) / observations.mean(dim=dim)
+
+
 def mae_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None, dim: str = "time") -> xr.DataArray:
 	"""
 	Calculate Mean Absolute Error between two xr.DataArrays
@@ -177,6 +233,24 @@ def mae_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None,
 		Mean Absolute Error
 	"""
 	return np.abs(model - observations).mean(dim=dim)
+
+
+def r2_dataset(ds, model: str = None, observations: str = None, dim: str = None) -> xr.Dataset | np.float64:
+	"""
+	Calculate R^2 between variables in an xr.Dataset
+	"""
+	if dim is None:
+		return r2(ds[model].to_numpy().flatten(), ds[observations].to_numpy().flatten())
+	else:
+		return xr.apply_ufunc(
+			r2,
+			ds[model],
+			ds[observations],
+			input_core_dims=[[dim], [dim]],
+			vectorize=True,
+			dask="parallelized",
+			output_dtypes=[float],
+		)
 
 
 def bias_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None, dim: str = "time") -> xr.DataArray:
@@ -196,6 +270,15 @@ def bias_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None
 	return bias(model_values, obs_values)
 
 
+def normalized_mse_dataarray(
+	model: xr.DataArray = None, observations: xr.DataArray = None, dim: str = "time"
+) -> xr.DataArray:
+	"""
+	Calculate Normalized Mean Squared Error between two xr.DataArrays
+	"""
+	return mse_dataarray(model, observations, dim) / observations.mean(dim=dim)
+
+
 def mse_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None, dim: str = "time") -> xr.DataArray:
 	"""
 	Calculate Mean Squared Error between two xr.DataArrays
@@ -209,6 +292,15 @@ def mse_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None,
 		Mean Squared Error
 	"""
 	return np.square(model - observations).mean(dim=dim)
+
+
+def normalized_rmse_dataarray(
+	model: xr.DataArray = None, observations: xr.DataArray = None, dim: str = "time"
+) -> xr.DataArray:
+	"""
+	Calculate Normalized Root Mean Squared Error between two xr.DataArrays
+	"""
+	return rmse_dataarray(model, observations, dim) / observations.mean(dim=dim)
 
 
 def rmse_dataarray(model: xr.DataArray = None, observations: xr.DataArray = None, dim: str = "time") -> xr.DataArray:
@@ -246,6 +338,7 @@ def error_df(
 	model_name: str | list[str] = None,
 	obs_name: str | list[str] = None,
 	output_index_names: T.Iterable = None,
+	**kwargs,
 ) -> pd.DataFrame:
 	"""
 	Calc ERROR for columns in a pandas dataframe. If multiple values of `model_name` and/or
@@ -301,6 +394,22 @@ def error_df(
 	return score
 
 
+def normalized_mae_df(
+	df: pd.DataFrame = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
+	output_index_names: T.Iterable = None,
+	axis: int = 0,
+) -> pd.DataFrame:
+	"""
+	Calculate Normalized Mean Absolute Error between two values/arrays.
+	"""
+	score = mae_df(df, model_name, obs_name, output_index_names, axis)
+	score = _divide_rowwise(score, df[obs_name].mean(axis=axis))
+	score.name = "nmae"
+	return score
+
+
 def mae_df(
 	df: pd.DataFrame = None,
 	model_name: str | list[str] = None,
@@ -326,6 +435,22 @@ def mae_df(
 		output_index_names = ensure_list(output_index_names)
 		score.index = output_index_names
 	score.name = "mae"
+	return score
+
+
+def normalized_mse_df(
+	df: pd.DataFrame = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
+	output_index_names: T.Iterable = None,
+	axis: int = 0,
+) -> pd.DataFrame:
+	"""
+	Calculate Normalized Mean Squared Error between two values/arrays.
+	"""
+	score = mse_df(df, model_name, obs_name, output_index_names, axis)
+	score = _divide_rowwise(score, df[obs_name].mean(axis=axis))
+	score.name = "nmse"
 	return score
 
 
@@ -382,6 +507,29 @@ def me_df(
 		output_index_names = ensure_list(output_index_names)
 		score.index = output_index_names
 	score.name = "me"
+	return score
+
+
+def _divide_rowwise(data, divisor):
+	if isinstance(divisor, pd.Series | pd.DataFrame):
+		return data.div(divisor.to_numpy(), axis=0)
+	elif isinstance(divisor, np.ndarray | float | int):
+		return data.div(divisor, axis=0)
+
+
+def normalized_rmse_df(
+	df: pd.DataFrame = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
+	output_index_names: T.Iterable = None,
+	axis: int = 0,
+) -> pd.DataFrame:
+	"""
+	Calculate Normalized Root Mean Squared Error between two values/arrays.
+	"""
+	score = rmse_df(df, model_name, obs_name, output_index_names, axis)
+	score = _divide_rowwise(score, df[obs_name].mean(axis=axis))
+	score.name = "nrmse"
 	return score
 
 

@@ -2,8 +2,10 @@ import unittest
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from terrapyn.scoring import grouped_scores
+from terrapyn.scoring.metrics import r2_dataset
 
 
 class TestGroupedScores(unittest.TestCase):
@@ -80,4 +82,34 @@ class TestGroupedScores(unittest.TestCase):
 		np.testing.assert_almost_equal(
 			result.loc[("a", False)].values,
 			np.array([0.0554697, 0.0554697, 0.0628578, 0.054773, 0.054773, 0.0615217]),
+		)
+
+
+class TestXarrayScores(unittest.TestCase):
+	rng = np.random.default_rng(42)
+	n_lat = 2
+	n_lon = 2
+	n_time = 10
+	data = np.ones((n_time, n_lat, n_lon)) + np.arange(n_time)[:, None, None]
+	data2 = data + rng.uniform(-0.1, 0.1, (n_time, n_lat, n_lon))
+	ds = xr.Dataset(
+		{
+			"var": (["time", "lat", "lon"], data),
+			"var2": (["time", "lat", "lon"], data2),
+		},
+		coords={
+			"time": pd.date_range("2014-09-06", periods=n_time),
+			"lat": [1, 2],
+			"lon": [3, 4],
+		},
+	)
+
+	def test_r2_dataset(self):
+		result = r2_dataset(self.ds, "var", "var2")
+		np.testing.assert_almost_equal(result, np.float64(0.9996301354890053))
+
+	def test_r2_dataset_time_dim(self):
+		result = r2_dataset(self.ds, "var", "var2", dim="time")
+		np.testing.assert_almost_equal(
+			result.to_numpy(), np.array([[0.99963177, 0.99969028], [0.99977611, 0.99954293]])
 		)
