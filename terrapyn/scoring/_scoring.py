@@ -5,6 +5,34 @@ import pandas as pd
 
 import terrapyn as tp
 
+from .metrics import (
+	bias_df,
+	efficiency_df,
+	error_df,
+	mae_df,
+	me_df,
+	mse_df,
+	normalized_mae_df,
+	normalized_mse_df,
+	normalized_rmse_df,
+	r2,
+	rmse_df,
+)
+
+DATAFRAME_METRICS = {
+	"me": me_df,
+	"mae": mae_df,
+	"rmse": rmse_df,
+	"mse": mse_df,
+	"error": error_df,
+	"bias": bias_df,
+	"efficiency": efficiency_df,
+	"nmae": normalized_mae_df,
+	"nmse": normalized_mse_df,
+	"nrmse": normalized_rmse_df,
+	"r2": r2,
+}
+
 
 def score_df(
 	df: pd.DataFrame = None,
@@ -33,41 +61,13 @@ def score_df(
 		by default in the form <model_name>_<obs_name>
 		axis: The axis over which to compute the scores (column-wise=0)
 	"""
-	match metric:
-		case "me":
-			return tp.scoring.metrics.me_df(
-				df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
-			)
-		case "mae":
-			return tp.scoring.metrics.mae_df(
-				df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
-			)
-		case "rmse":
-			return tp.scoring.metrics.rmse_df(
-				df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
-			)
-		case "mse":
-			return tp.scoring.metrics.mse_df(
-				df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
-			)
-		case "error":
-			return tp.scoring.metrics.error_df(
-				df=df,
-				model_name=model_names,
-				obs_name=obs_names,
-				output_index_names=output_index_names,  # axis=axis
-			)
-		case "bias":
-			return tp.scoring.metrics.bias_df(
-				df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names
-			)
-		case "efficiency":
-			return tp.scoring.metrics.efficiency_df(
-				df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names
-			)
-		case _:
-			options = ", ".join(["me", "mae", "rmse", "mse", "error", "bias", "efficiency"])
-			raise ValueError(f"`metric` must be one of {options}")
+	if metric not in DATAFRAME_METRICS:
+		options = ", ".join(DATAFRAME_METRICS.keys())
+		raise ValueError(f"`metric` must be one of {options}")
+
+	return DATAFRAME_METRICS[metric](
+		df=df, model_name=model_names, obs_name=obs_names, output_index_names=output_index_names, axis=axis
+	)
 
 
 def _set_to_nan_if_fewer_than_min_points(
@@ -153,6 +153,7 @@ def grouped_scores(
 			model_names=model_names,
 			obs_names=obs_names,
 			output_index_names=output_index_names,
+			axis=0,
 			include_groups=False,
 		)
 	else:
@@ -164,6 +165,7 @@ def grouped_scores(
 				model_names=model_names,
 				obs_names=obs_names,
 				output_index_names=output_index_names,
+				axis=0,
 				include_groups=False,
 			)
 
