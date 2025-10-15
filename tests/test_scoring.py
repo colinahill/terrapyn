@@ -55,7 +55,7 @@ class TestGroupedScores(unittest.TestCase):
 	def test_multiple_metrics_with_multiple_grouping_keys(self):
 		result = grouped_scores(
 			self.df,
-			metrics=["me", "mae", "rmse"],
+			metrics=["me", "mae", "rmse", "r2"],
 			groupby_time=True,
 			time_dim="date",
 			time_grouping="month",
@@ -66,7 +66,7 @@ class TestGroupedScores(unittest.TestCase):
 		)
 		np.testing.assert_almost_equal(
 			result.loc[(2, "a", False)].values,
-			np.array([0.0626408, 0.0626408, 0.0697566, 0.0587797, 0.0587797, 0.0652613]),
+			np.array([0.0626408, 0.0626408, 1.0, 0.0697566, 0.0587797, 0.0587797, 1.0, 0.0652613]),
 		)
 
 	def test_no_time_multiple_metrics_with_multiple_grouping_keys(self):

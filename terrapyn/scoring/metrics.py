@@ -510,6 +510,34 @@ def me_df(
 	return score
 
 
+def r2_df(
+	df: pd.DataFrame = None,
+	model_name: str | list[str] = None,
+	obs_name: str | list[str] = None,
+	output_index_names: T.Iterable = None,
+	axis: int = 0,
+) -> pd.DataFrame:
+	"""
+	Calculate R^2 for columns in a pandas dataframe.
+
+	Args:
+		df: the input dataframe
+		model_name: Name(s) of columns for the prediction/model
+		obs_name: Name(s) of columns for the truth/observations
+		output_index_names: Names to assign to the index/columns of the output dataframe
+		axis: Axis over which to perform the calculation
+
+	Returns:
+		R^2
+	"""
+	model = df[model_name]
+	obs = df[obs_name]
+	if output_index_names is not None:
+		output_index_names = ensure_list(output_index_names)
+	score = pd.Series(r2(model, obs), index=output_index_names, name="r2")
+	return score
+
+
 def _divide_rowwise(data, divisor):
 	if isinstance(divisor, pd.Series | pd.DataFrame):
 		return data.div(divisor.to_numpy(), axis=0)

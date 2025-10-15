@@ -419,7 +419,7 @@ class TestSetTimeInData(unittest.TestCase):
 		results = tp.time._set_time_in_data(
 			self.df, set_time_to_midnight=True, hours_to_subtract=None
 		).index.get_level_values("time")
-		expected = pd.DatetimeIndex(["2021-01-01", "2021-01-02"], dtype="datetime64[ns]", name="time", freq=None)
+		expected = pd.DatetimeIndex(["2019-03-15", "2019-03-16"], dtype="datetime64[ns]", name="time", freq=None)
 		pd.testing.assert_index_equal(results, expected)
 
 	def test_subtract_hours(self):
@@ -427,7 +427,7 @@ class TestSetTimeInData(unittest.TestCase):
 			self.df, set_time_to_midnight=True, hours_to_subtract=5
 		).index.get_level_values("time")
 		expected = pd.DatetimeIndex(
-			["2020-12-31 19:00:00", "2021-01-01 19:00:00"], dtype="datetime64[ns]", name="time", freq=None
+			["2019-03-15 01:00:00", "2019-03-16 01:00:00"], dtype="datetime64[ns]", name="time", freq=None
 		)
 		pd.testing.assert_index_equal(results, expected)
 

@@ -111,8 +111,9 @@ dev = [
     "pre-commit>=4.3.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "pytest-xdist>=3.6.1",
     "ruff>=0.12.10",
 ]
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes"
+addopts = "--doctest-modules --cov=terrapyn --cov-branch --cov-report term-missing  -vv --color=yes -n auto"

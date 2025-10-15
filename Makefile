@@ -27,7 +27,7 @@ lock:
 	uv lock
 
 test:
-	uv run pytest terrapyn/ tests/
+	uv run pytest
 
 upgrade:
 	uv lock --upgrade
