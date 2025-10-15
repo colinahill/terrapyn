@@ -408,7 +408,7 @@ class TestSetTimeInData(unittest.TestCase):
 
 	def test_replace_times(self):
 		results = tp.time._set_time_in_data(
-			self.df, new_times=pd.date_range("2021-01-1 06:00", freq="D", periods=2)
+			self.df.copy(), new_times=pd.date_range("2021-01-1 06:00", freq="D", periods=2)
 		).index.get_level_values("time")
 		expected = pd.DatetimeIndex(
 			["2021-01-01 06:00:00", "2021-01-02 06:00:00"], dtype="datetime64[ns]", name="time", freq=None
@@ -417,22 +417,22 @@ class TestSetTimeInData(unittest.TestCase):
 
 	def test_set_times_to_midnight(self):
 		results = tp.time._set_time_in_data(
-			self.df, set_time_to_midnight=True, hours_to_subtract=None
+			self.df.copy(), set_time_to_midnight=True, hours_to_subtract=None
 		).index.get_level_values("time")
-		expected = pd.DatetimeIndex(["2021-01-01", "2021-01-02"], dtype="datetime64[ns]", name="time", freq=None)
+		expected = pd.DatetimeIndex(["2019-03-15", "2019-03-16"], dtype="datetime64[ns]", name="time", freq=None)
 		pd.testing.assert_index_equal(results, expected)
 
 	def test_subtract_hours(self):
 		results = tp.time._set_time_in_data(
-			self.df, set_time_to_midnight=True, hours_to_subtract=5
+			self.df.copy(), set_time_to_midnight=True, hours_to_subtract=5
 		).index.get_level_values("time")
 		expected = pd.DatetimeIndex(
-			["2020-12-31 19:00:00", "2021-01-01 19:00:00"], dtype="datetime64[ns]", name="time", freq=None
+			["2019-03-15 01:00:00", "2019-03-16 01:00:00"], dtype="datetime64[ns]", name="time", freq=None
 		)
 		pd.testing.assert_index_equal(results, expected)
 
 	def test_no_modification(self):
-		results = tp.time._set_time_in_data(self.df).index.get_level_values("time")
+		results = tp.time._set_time_in_data(self.df.copy()).index.get_level_values("time")
 		expected = self.df.index.get_level_values("time")
 		pd.testing.assert_index_equal(results, expected)
 

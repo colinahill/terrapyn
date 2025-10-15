@@ -53,12 +53,12 @@ def set_dim_values_in_data(
 		if dim in data.index.names:
 			data.index = data.index.set_levels(values, level=dim) if isinstance(data.index, pd.MultiIndex) else values
 		else:
-			if isinstance(data, pd.Series):
-				# Update values of series, not index
-				data.update(values)
+			if isinstance(data, pd.Series):  # noqa: SIM108
+				# Use the same index with new values
+				data = pd.Series(values, index=data.index)
 			else:
 				# update column of dataframe
-				data[dim] = values
+				data = data.assign(**{dim: values})
 	elif isinstance(data, xr.Dataset | xr.DataArray):
 		data = data.assign_coords({dim: values})
 	else:

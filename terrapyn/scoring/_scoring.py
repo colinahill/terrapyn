@@ -15,7 +15,7 @@ from .metrics import (
 	normalized_mae_df,
 	normalized_mse_df,
 	normalized_rmse_df,
-	r2,
+	r2_df,
 	rmse_df,
 )
 
@@ -30,7 +30,7 @@ DATAFRAME_METRICS = {
 	"nmae": normalized_mae_df,
 	"nmse": normalized_mse_df,
 	"nrmse": normalized_rmse_df,
-	"r2": r2,
+	"r2": r2_df,
 }
 
 
